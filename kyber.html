@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KYBER — Saber Configurator</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#131826; --panel2:#0f1420; --line:#232b3f;
+    --text:#e8ecf6; --dim:#8b94ab; --accent:#e02929; /* follows blade color */
+    --good:#3ddc84; --warn:#ffb020;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    min-height:100vh;
+  }
+  header{
+    display:flex; align-items:center; gap:14px;
+    padding:18px 26px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#101524,#0b0e14);
+    position:sticky; top:0; z-index:10;
+  }
+  .crystal{
+    width:34px; height:34px; flex:0 0 auto;
+    filter:drop-shadow(0 0 8px var(--accent));
+  }
+  h1{
+    font-size:26px; letter-spacing:8px; font-weight:800;
+    background:linear-gradient(90deg,var(--text),var(--accent));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .sub{color:var(--dim); font-size:12px; letter-spacing:2px; margin-top:2px;}
+  .headbtns{margin-left:auto; display:flex; gap:10px;}
+  button{
+    background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:10px; padding:10px 16px; font-size:14px; font-weight:600;
+    cursor:pointer; transition:all .15s;
+  }
+  button:hover{border-color:var(--accent); box-shadow:0 0 12px color-mix(in srgb, var(--accent) 40%, transparent);}
+  button.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+  button.primary:hover{filter:brightness(1.15);}
+  button:disabled{opacity:.4; cursor:not-allowed; box-shadow:none;}
+  main{max-width:1100px; margin:0 auto; padding:24px 26px 80px;}
+
+  /* Blade preview */
+  .stage{
+    position:relative; height:120px; margin:10px 0 26px;
+    background:radial-gradient(ellipse at 50% 120%, #141a2c 0%, transparent 70%);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .saber{display:flex; align-items:center; width:90%; max-width:820px;}
+  .hilt{
+    width:130px; height:26px; flex:0 0 auto; border-radius:5px;
+    background:linear-gradient(180deg,#5a6272,#2a2f3b 45%,#171b24);
+    border:1px solid #3a4152; position:relative;
+  }
+  .hilt::after{content:""; position:absolute; right:-4px; top:4px; bottom:4px; width:6px; background:#11151d; border-radius:2px;}
+  .blade-wrap{flex:1; height:18px; position:relative;}
+  .blade{
+    position:absolute; left:0; top:2px; bottom:2px; width:0%;
+    border-radius:0 8px 8px 0;
+    background:linear-gradient(180deg, #fff 20%, var(--accent) 50%, #fff 80%);
+    box-shadow:0 0 6px var(--accent), 0 0 18px var(--accent), 0 0 42px var(--accent), 0 0 80px color-mix(in srgb, var(--accent) 60%, transparent);
+    transition:none;
+  }
+  .blade.unstable{animation:flicker .12s infinite;}
+  .blade.pulse{animation:pulse 1.6s ease-in-out infinite;}
+  .blade.flashing{animation:hardflash .35s steps(2) infinite;}
+  .blade.rainbow{background:linear-gradient(90deg,red,orange,yellow,lime,cyan,blue,magenta); box-shadow:0 0 20px #fff;}
+  @keyframes flicker{0%{opacity:1}50%{opacity:.78}100%{opacity:.95}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  @keyframes hardflash{0%{opacity:1}100%{opacity:.3}}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:820px){.grid{grid-template-columns:1fr;}}
+  section.card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px;
+  }
+  section.card h2{
+    font-size:13px; letter-spacing:3px; text-transform:uppercase; color:var(--dim);
+    margin-bottom:14px; display:flex; align-items:center; gap:8px;
+  }
+  section.card h2::before{content:""; width:8px; height:8px; border-radius:2px; background:var(--accent); box-shadow:0 0 8px var(--accent);}
+  .row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:9px 0; border-bottom:1px dashed #1d2436;
+  }
+  .row:last-child{border-bottom:none;}
+  .row label{font-size:14px;}
+  .row small{display:block; color:var(--dim); font-size:11px; margin-top:2px;}
+  input[type=number]{
+    width:86px; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:7px 9px; font-size:14px;
+  }
+  input[type=range]{accent-color:var(--accent); width:150px;}
+  select{
+    background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:7px 9px; font-size:13px; max-width:170px;
+  }
+  input[type=color]{width:44px; height:32px; border:none; background:none; cursor:pointer;}
+  /* toggle */
+  .tog{position:relative; width:46px; height:26px; flex:0 0 auto;}
+  .tog input{opacity:0; width:0; height:0;}
+  .tog span{
+    position:absolute; inset:0; border-radius:13px; background:#222a3d; border:1px solid var(--line);
+    transition:.2s; cursor:pointer;
+  }
+  .tog span::after{
+    content:""; position:absolute; left:3px; top:3px; width:18px; height:18px; border-radius:50%;
+    background:#657090; transition:.2s;
+  }
+  .tog input:checked + span{background:color-mix(in srgb, var(--accent) 35%, #222a3d); border-color:var(--accent);}
+  .tog input:checked + span::after{left:23px; background:var(--accent); box-shadow:0 0 8px var(--accent);}
+
+  /* fonts list */
+  .font-item{
+    border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:12px;
+    background:var(--panel2);
+  }
+  .font-item.active{border-color:var(--accent); box-shadow:0 0 10px color-mix(in srgb, var(--accent) 25%, transparent);}
+  .font-head{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .font-head b{font-size:14px;}
+  .swatch{width:20px; height:20px; border-radius:6px; border:1px solid #0006;}
+  .font-controls{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px;}
+  .fc{display:flex; flex-direction:column; gap:3px;}
+  .fc label{font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--dim);}
+  .presets{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .preset{
+    display:flex; align-items:center; gap:8px; padding:9px 16px; border-radius:10px;
+    border:1px solid var(--line); background:var(--panel2); cursor:pointer; font-weight:700; font-size:14px;
+  }
+  .preset .dot{width:12px; height:12px; border-radius:50%;}
+  .status{
+    position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(80px);
+    background:#182034; border:1px solid var(--accent); color:var(--text);
+    padding:12px 22px; border-radius:12px; font-size:14px; transition:transform .25s; z-index:50;
+    box-shadow:0 6px 30px #000a;
+  }
+  .status.show{transform:translateX(-50%) translateY(0);}
+  .filestate{color:var(--dim); font-size:12px; margin-bottom:16px;}
+  .filestate b{color:var(--text);}
+  .unknown-note{color:var(--dim); font-size:11px; margin-top:10px;}
+  .hint{background:#151b2c; border:1px dashed var(--line); border-radius:12px; padding:14px 16px; color:var(--dim); font-size:13px; line-height:1.5; margin-bottom:18px;}
+  .hint b{color:var(--text);}
+</style>
+</head>
+<body>
+<header>
+  <svg class="crystal" viewBox="0 0 34 34"><polygon points="17,2 27,12 17,32 7,12" fill="none" stroke="var(--accent)" stroke-width="2"/><polygon points="17,8 23,13 17,26 11,13" fill="var(--accent)" opacity=".55"/></svg>
+  <div>
+    <h1>KYBER</h1>
+    <div class="sub">SABER CONFIGURATOR · XENOPIXEL V3</div>
+  </div>
+  <div class="headbtns">
+    <button id="btnBle" title="Experimental: talk to the saber over Bluetooth">&#x1F4E1; BLE beta</button>
+    <button id="btnDemo">Demo config</button>
+    <button id="btnOpen" class="primary">Open saber drive</button>
+    <button id="btnSave" disabled>Save to saber</button>
+  </div>
+</header>
+
+<main>
+  <div class="stage">
+    <div class="saber">
+      <div class="hilt"></div>
+      <div class="blade-wrap"><div class="blade" id="blade"></div></div>
+    </div>
+  </div>
+
+  <div class="hint" id="hint">
+    <b>How to start:</b> plug the saber in with USB (it shows up as a drive), click <b>Open saber drive</b> and pick the drive.
+    Kyber finds the <b>set/config.ini</b>, shows every setting with real controls, and writes it back when you save.
+    Lines Kyber doesn't know yet are kept exactly as they are, so nothing ever breaks.
+    No saber right now? Hit <b>Demo config</b> to play.
+  </div>
+  <div class="filestate" id="filestate"></div>
+
+  <div class="presets" id="presets" style="display:none">
+    <div class="preset" data-rgb="255,0,0"><span class="dot" style="background:#f00; box-shadow:0 0 8px #f00"></span>Vader</div>
+    <div class="preset" data-rgb="0,80,255"><span class="dot" style="background:#0050ff; box-shadow:0 0 8px #0050ff"></span>Anakin</div>
+    <div class="preset" data-rgb="0,255,60"><span class="dot" style="background:#00ff3c; box-shadow:0 0 8px #00ff3c"></span>Yoda</div>
+    <div class="preset" data-rgb="160,60,255"><span class="dot" style="background:#a03cff; box-shadow:0 0 8px #a03cff"></span>Mace</div>
+    <div class="preset" data-rgb="255,255,255"><span class="dot" style="background:#fff; box-shadow:0 0 8px #fff"></span>Ahsoka</div>
+  </div>
+
+  <div class="grid" id="settingsGrid" style="display:none">
+    <section class="card" id="cardMotion">
+      <h2>Motion controls</h2>
+      <div id="motionRows"></div>
+    </section>
+
+    <section class="card" id="cardSound">
+      <h2>Sound &amp; timing</h2>
+      <div id="soundRows"></div>
+    </section>
+
+    <section class="card" id="cardModes">
+      <h2>Blade modes</h2>
+      <div id="modeRows"></div>
+    </section>
+
+    <section class="card" id="cardMisc">
+      <h2>Clash &amp; other</h2>
+      <div id="miscRows"></div>
+      <div class="unknown-note" id="unknownNote"></div>
+    </section>
+
+    <section class="card" style="grid-column:1/-1" id="cardFonts">
+      <h2>Blade colors &amp; ignition (per sound font)</h2>
+      <div id="fontList"></div>
+    </section>
+
+    <section class="card" style="grid-column:1/-1" id="cardSoundFonts">
+      <h2>Sound fonts on the card</h2>
+      <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
+        <button id="btnAddFont">+ Add font from folder</button>
+        <span class="unknown-note" id="sfNote" style="margin-top:0"></span>
+      </div>
+      <div id="soundFontList"></div>
+    </section>
+  </div>
+</main>
+
+<div class="status" id="status"></div>
+
+<!-- BLE explorer (experimental) -->
+<div id="blePanel" style="display:none; max-width:1100px; margin:0 auto; padding:0 26px 60px;">
+  <section class="card">
+    <h2>Bluetooth explorer (experimental)</h2>
+    <div class="hint" style="margin-bottom:12px">
+      Step 1 of making Kyber wireless: see what the saber says over Bluetooth.
+      Turn the saber ON, click connect, and pick it from the list. Kyber lists every service and
+      characteristic it finds, and logs anything the saber sends. Later we teach Kyber the commands.
+    </div>
+    <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+      <button id="bleConnect" class="primary">Connect to saber</button>
+      <input id="bleHex" type="text" placeholder="hex bytes to send e.g. AA 01 FF" style="flex:1; min-width:200px; background:var(--panel2); border:1px solid var(--line); color:var(--text); border-radius:8px; padding:8px 10px; font-family:monospace;">
+      <button id="bleSend" disabled>Send</button>
+    </div>
+    <pre id="bleLog" style="background:#0a0d14; border:1px solid var(--line); border-radius:10px; padding:12px; font-size:12px; line-height:1.6; max-height:320px; overflow:auto; white-space:pre-wrap;">Not connected.</pre>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ================= Kyber v0.1 =================
+   Parses Xenopixel v3 config.ini. Known keys get real UI;
+   unknown lines are preserved byte-for-byte on save. */
+
+const IGNITION_FX = ["Fire blade","Steady","Unstable","Rainbow","Candy","Crack","Pulse","Flashing"];
+const BLADE_STYLE = ["Standard","Velocity","Torch","Blaster","Ghost","Preon 1","Preon 2","Preon 3","Preon 4","Preon 5","Preon 6","Preon 7"];
+const FX3 = ["Effect 1","Effect 2","Effect 3"];
+const FX2 = ["Effect 1","Effect 2"];
+const FX1 = ["Effect 1"];
+
+/* Known scalar keys: [aliases], type, label, hint, section */
+const KNOWN = [
+  {keys:["twist_on","TwistPwrOn"],        t:"bool",  label:"Twist ignition",      hint:"twist the hilt to ignite",           sec:"motion"},
+  {keys:["twist_off","TwistPwrOff"],      t:"bool",  label:"Twist off",           hint:"twist to retract the blade",          sec:"motion"},
+  {keys:["swing_on","SwingPwrOn"],        t:"bool",  label:"Swing ignition",      hint:"swing to ignite",                     sec:"motion"},
+  {keys:["pull_push_on","StabPwrOn","stab_on"], t:"bool", label:"Stab / push ignition", hint:"forward stab to ignite",        sec:"motion"},
+  {keys:["push_pull_off","StabPwrOff","pull_off"], t:"bool", label:"Pull off",    hint:"pull back to retract",                sec:"motion"},
+  {keys:["motion_control"],               t:"bool",  label:"All motion sensing",  hint:"master switch for gestures",          sec:"motion"},
+  {keys:["twist_sensitivity"],            t:"num",   label:"Twist sensitivity",   hint:"lower number = more sensitive",       sec:"motion"},
+  {keys:["swing_sensitivity"],            t:"num",   label:"Swing sensitivity",   hint:"lower number = more sensitive",       sec:"motion"},
+  {keys:["push_sensitivity"],             t:"num",   label:"Stab sensitivity",    hint:"lower number = more sensitive",       sec:"motion"},
+  {keys:["pull_sensitivity"],             t:"num",   label:"Pull sensitivity",    hint:"lower number = more sensitive",       sec:"motion"},
+
+  {keys:["volume"],                       t:"range", min:0, max:100, label:"Volume", hint:"90 max recommended",               sec:"sound"},
+  {keys:["countdown"],                    t:"bool",  label:"Countdown sound",     hint:"LED blink countdown audio",           sec:"sound"},
+  {keys:["PowerOnTime","poweron_time"],   t:"num",   label:"Power-on hold (ms)",  hint:"hold time for power on",              sec:"sound"},
+  {keys:["PowerOffTime","poweroff_time"], t:"num",   label:"Auto-off time (ms)",  hint:"idle time before shutdown",           sec:"sound"},
+
+  {keys:["velocity_mode"],                t:"bool",  label:"Velocity mode",       hint:"blade reacts to swing speed",         sec:"modes"},
+  {keys:["torch_mode"],                   t:"bool",  label:"Torch mode",          hint:"partial blade like a torch",          sec:"modes"},
+  {keys:["blaster_mode"],                 t:"bool",  label:"Blaster mode",        hint:"blaster deflect blade style",         sec:"modes"},
+  {keys:["ghost_mode"],                   t:"bool",  label:"Ghost mode",          hint:"transparent flicker blade",           sec:"modes"},
+  {keys:["multiblock_mode"],              t:"bool",  label:"Multi-block",         hint:"multi blaster block action",          sec:"modes"},
+  {keys:["multilock_mode"],               t:"bool",  label:"Multi-lock",          hint:"multi lockup action",                 sec:"modes"},
+  {keys:["lightning_block_mode"],         t:"bool",  label:"Lightning block",     hint:"force lightning block action",        sec:"modes"},
+
+  {keys:["flash_on_clash"],               t:"bool",  label:"Flash on clash",      hint:"blade flashes when hit",              sec:"misc"},
+  {keys:["clash_sensitivity"],            t:"num",   step:0.1, label:"Clash sensitivity", hint:"lower number = more sensitive", sec:"misc"},
+  {keys:["blade_length","BladeLength"],   t:"num",   label:"Blade length (LEDs)", hint:"pixel count of your blade",           sec:"misc"},
+  {keys:["side_blade_length"],            t:"num",   label:"Side blade length",   hint:"for crossguard blades",               sec:"misc"},
+  {keys:["side_blade_delay"],             t:"num",   label:"Side blade delay (ms)", hint:"crossguard ignition delay",         sec:"misc"},
+];
+
+const DEMO = `#Xenopixel v3 demo config
+volume=80
+blade_length=132
+twist_on=1
+twist_off=1
+twist_sensitivity=220
+swing_on=1
+swing_sensitivity=1100
+pull_push_on=1
+push_pull_off=0
+push_sensitivity=18
+pull_sensitivity=13
+motion_control=1
+countdown=1
+flash_on_clash=1
+clash_sensitivity=2.0
+velocity_mode=1
+torch_mode=0
+blaster_mode=1
+ghost_mode=0
+multiblock_mode=0
+multilock_mode=0
+lightning_block_mode=0
+PowerOnTime=2000
+PowerOffTime=10000
+mystery_future_setting=42
+font1=(255,0,0),2,0,0,0,0,0,200,500
+font2=(0,80,255),1,0,0,0,1,0,200,500
+font3=(0,255,60),6,1,1,0,2,1,300,600
+font4=(255,140,0),0,0,0,0,0,2,150,400
+`;
+
+let lines = [];           // raw file lines
+let scalarMap = new Map(); // key -> {lineIdx, def, value}
+let fonts = [];            // {lineIdx, n, rgb:[r,g,b], vals:[...8], raw}
+let dirHandle = null, fileHandle = null, fileLabel = "";
+let activeFont = 0, dirty = false;
+
+const $ = id => document.getElementById(id);
+const status = msg => { const s=$("status"); s.textContent=msg; s.classList.add("show"); clearTimeout(s._t); s._t=setTimeout(()=>s.classList.remove("show"),2600); };
+const rgb2hex = (r,g,b)=>"#"+[r,g,b].map(v=>(+v).toString(16).padStart(2,"0")).join("");
+const hex2rgb = h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+
+function parse(text){
+  lines = text.split(/\r?\n/);
+  scalarMap.clear(); fonts = [];
+  lines.forEach((ln,i)=>{
+    const f = ln.match(/^\s*font(\d+)\s*=\s*\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\)\s*,(.*)$/i);
+    if(f){
+      const vals = f[5].split(",").map(s=>s.trim());
+      fonts.push({lineIdx:i, n:+f[1], rgb:[+f[2],+f[3],+f[4]], vals});
+      return;
+    }
+    const m = ln.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$/);
+    if(!m) return;
+    const key = m[1];
+    const def = KNOWN.find(k=>k.keys.some(a=>a.toLowerCase()===key.toLowerCase()));
+    scalarMap.set(key,{lineIdx:i, def, value:m[2]});
+  });
+  fonts.sort((a,b)=>a.n-b.n);
+  activeFont = 0;
+}
+
+function serialize(){
+  const out = [...lines];
+  for(const [key,e] of scalarMap) out[e.lineIdx] = key+"="+e.value;
+  for(const f of fonts) out[f.lineIdx] = "font"+f.n+"=("+f.rgb.join(",")+"),"+f.vals.join(",");
+  return out.join("\n");
+}
+
+/* ---------- UI build ---------- */
+function build(){
+  $("settingsGrid").style.display="grid";
+  $("presets").style.display="flex";
+  $("hint").style.display="none";
+  const secs = {motion:$("motionRows"), sound:$("soundRows"), modes:$("modeRows"), misc:$("miscRows")};
+  Object.values(secs).forEach(el=>el.innerHTML="");
+  let unknown = 0;
+
+  for(const [key,e] of scalarMap){
+    if(!e.def){ unknown++; continue; }
+    const row = document.createElement("div");
+    row.className="row";
+    const lab = document.createElement("div");
+    lab.innerHTML = `<label>${e.def.label}</label><small>${e.def.hint} · <code>${key}</code></small>`;
+    row.appendChild(lab);
+    let ctrl;
+    if(e.def.t==="bool"){
+      ctrl = document.createElement("label"); ctrl.className="tog";
+      ctrl.innerHTML = `<input type="checkbox" ${+e.value?"checked":""}><span></span>`;
+      ctrl.querySelector("input").addEventListener("change",ev=>{ e.value = ev.target.checked?"1":"0"; markDirty(); });
+    } else if(e.def.t==="range"){
+      ctrl = document.createElement("div");
+      ctrl.innerHTML = `<input type="range" min="${e.def.min}" max="${e.def.max}" value="${parseFloat(e.value)||0}"> <b style="width:30px;display:inline-block">${e.value}</b>`;
+      const r=ctrl.querySelector("input"), b=ctrl.querySelector("b");
+      r.addEventListener("input",()=>{ e.value=r.value; b.textContent=r.value; markDirty(); });
+    } else {
+      ctrl = document.createElement("input"); ctrl.type="number";
+      if(e.def.step) ctrl.step=e.def.step;
+      ctrl.value = e.value;
+      ctrl.addEventListener("change",()=>{ e.value=ctrl.value; markDirty(); });
+    }
+    row.appendChild(ctrl);
+    secs[e.def.sec].appendChild(row);
+  }
+  $("unknownNote").textContent = unknown
+    ? `${unknown} setting${unknown>1?"s":""} Kyber doesn't know yet — kept safe and untouched in the file.` : "";
+
+  buildFonts();
+  updateBladeFromFont();
+  scanSoundFonts();
+}
+
+function buildFonts(){
+  const list = $("fontList"); list.innerHTML="";
+  fonts.forEach((f,idx)=>{
+    const item = document.createElement("div");
+    item.className="font-item"+(idx===activeFont?" active":"");
+    const hex = rgb2hex(...f.rgb);
+    item.innerHTML = `
+      <div class="font-head">
+        <span class="swatch" style="background:${hex}; box-shadow:0 0 8px ${hex}"></span>
+        <b>Font ${f.n}</b>
+        <input type="color" value="${hex}" title="Blade color">
+        <button style="margin-left:auto;padding:6px 12px;font-size:12px" data-act="preview">Preview blade</button>
+      </div>
+      <div class="font-controls"></div>`;
+    const fc = item.querySelector(".font-controls");
+    const defs = [
+      {i:0, label:"Ignition effect", opts:IGNITION_FX},
+      {i:1, label:"Blaster effect",  opts:FX3},
+      {i:2, label:"Force effect",    opts:FX2},
+      {i:3, label:"Lockup effect",   opts:FX1},
+      {i:4, label:"Clash effect",    opts:FX3},
+      {i:5, label:"Blade style",     opts:BLADE_STYLE},
+      {i:6, label:"Ignition speed",  num:true, hint:"higher = slower"},
+      {i:7, label:"Retract speed",   num:true, hint:"higher = slower"},
+    ];
+    defs.forEach(d=>{
+      if(f.vals.length <= d.i) return;
+      const box = document.createElement("div"); box.className="fc";
+      if(d.num){
+        box.innerHTML = `<label>${d.label}</label><input type="number" value="${f.vals[d.i]}" title="${d.hint}">`;
+        box.querySelector("input").addEventListener("change",ev=>{ f.vals[d.i]=ev.target.value; markDirty(); });
+      } else {
+        const sel = d.opts.map((o,oi)=>`<option value="${oi}" ${+f.vals[d.i]===oi?"selected":""}>${o}</option>`).join("");
+        box.innerHTML = `<label>${d.label}</label><select>${sel}</select>`;
+        box.querySelector("select").addEventListener("change",ev=>{ f.vals[d.i]=ev.target.value; markDirty(); if(d.i===0&&idx===activeFont) updateBladeFromFont(); });
+      }
+      fc.appendChild(box);
+    });
+    item.querySelector("input[type=color]").addEventListener("input",ev=>{
+      f.rgb = hex2rgb(ev.target.value);
+      item.querySelector(".swatch").style.background = ev.target.value;
+      item.querySelector(".swatch").style.boxShadow = "0 0 8px "+ev.target.value;
+      markDirty();
+      if(idx===activeFont) updateBladeFromFont();
+    });
+    item.querySelector("[data-act=preview]").addEventListener("click",()=>{
+      activeFont = idx;
+      document.querySelectorAll(".font-item").forEach(el=>el.classList.remove("active"));
+      item.classList.add("active");
+      updateBladeFromFont(); igniteAnim();
+      const sf = soundFonts.find(s=>s.n===f.n) || {n:f.n, demo:true};
+      playFont(sf,"ignite");
+    });
+    list.appendChild(item);
+  });
+}
+
+/* ---------- blade preview ---------- */
+function updateBladeFromFont(){
+  const f = fonts[activeFont]; if(!f) return;
+  const hex = rgb2hex(...f.rgb);
+  document.documentElement.style.setProperty("--accent", hex);
+  const blade = $("blade");
+  blade.className = "blade";
+  const fx = +f.vals[0];
+  if(fx===2||fx===5) blade.classList.add("unstable");
+  else if(fx===6) blade.classList.add("pulse");
+  else if(fx===7) blade.classList.add("flashing");
+  else if(fx===3) blade.classList.add("rainbow");
+  blade.style.width = "100%";
+}
+function igniteAnim(){
+  const f = fonts[activeFont]; if(!f) return;
+  const ms = Math.max(120, (+f.vals[6]||200)*3);
+  const blade = $("blade");
+  blade.style.transition = "none"; blade.style.width = "0%";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    blade.style.transition = `width ${ms}ms cubic-bezier(.2,.9,.3,1)`;
+    blade.style.width = "100%";
+  }));
+}
+
+/* ---------- presets ---------- */
+$("presets").addEventListener("click",ev=>{
+  const p = ev.target.closest(".preset"); if(!p) return;
+  const f = fonts[activeFont]; if(!f) return status("Open a config first");
+  f.rgb = p.dataset.rgb.split(",").map(Number);
+  markDirty(); buildFonts(); updateBladeFromFont(); igniteAnim();
+  status(p.textContent.trim()+" color set on font "+f.n);
+});
+
+/* ---------- file handling ---------- */
+async function openDrive(){
+  if(!window.showDirectoryPicker) return status("This browser can't open drives — use Chrome");
+  try{
+    dirHandle = await window.showDirectoryPicker({mode:"readwrite"});
+  }catch(e){ return; }
+  // find config.ini in set/ or setting/ or root
+  fileHandle = null;
+  for(const folder of ["set","setting","Set","SET"]){
+    try{
+      const d = await dirHandle.getDirectoryHandle(folder);
+      for(const name of ["config.ini","Config.ini","config.txt"]){
+        try{ fileHandle = await d.getFileHandle(name); fileLabel = folder+"/"+name; break; }catch(e){}
+      }
+      if(fileHandle) break;
+    }catch(e){}
+  }
+  if(!fileHandle){
+    for(const name of ["config.ini","Config.ini"]){
+      try{ fileHandle = await dirHandle.getFileHandle(name); fileLabel = name; break; }catch(e){}
+    }
+  }
+  if(!fileHandle) return status("No config.ini found — is this the saber drive?");
+  const file = await fileHandle.getFile();
+  parse(await file.text());
+  build();
+  $("btnSave").disabled = false; dirty = false;
+  $("filestate").innerHTML = `Connected: <b>${dirHandle.name}/${fileLabel}</b> · ${fonts.length} fonts · ${scalarMap.size} settings`;
+  status("Saber connected. May the config be with you.");
+}
+
+async function save(){
+  if(!fileHandle){ // demo mode: download
+    const blob = new Blob([serialize()],{type:"text/plain"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "config.ini"; a.click();
+    return status("Demo mode: downloaded config.ini");
+  }
+  try{
+    const w = await fileHandle.createWritable();
+    await w.write(serialize()); await w.close();
+    dirty = false; $("btnSave").textContent = "Save to saber";
+    status("Saved to saber ✓ — restart the saber to load it");
+  }catch(e){ status("Save failed: "+e.message); }
+}
+
+function markDirty(){ dirty = true; if(fileHandle) $("btnSave").textContent = "Save to saber ●"; }
+
+function loadDemo(){
+  dirHandle = null; fileHandle = null;
+  parse(DEMO); build();
+  $("btnSave").disabled = false;
+  $("filestate").innerHTML = `<b>Demo config</b> loaded (not your saber) · ${fonts.length} fonts · ${scalarMap.size} settings — Save downloads the file instead`;
+  igniteAnim();
+}
+
+/* ---------- sound: real wavs from the card, or synth in demo ---------- */
+let soundFonts = [];   // {name, n, demo, dir?, wavs?:Map(lowerName->fileHandle)}
+let audioCtx = null, humNode = null, humPlayingFor = -1;
+let humAudio = null;   // <audio> for real hum loops
+const AC = () => audioCtx || (audioCtx = new (window.AudioContext||window.webkitAudioContext)());
+
+function synthIgnite(n){
+  const ctx = AC(), t = ctx.currentTime;
+  const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+  o.type = "sawtooth"; f.type = "lowpass"; f.frequency.value = 600;
+  o.frequency.setValueAtTime(40+n*10, t);
+  o.frequency.exponentialRampToValueAtTime(90+n*22, t+0.35);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.5, t+0.08);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.7);
+  o.connect(f).connect(g).connect(ctx.destination);
+  o.start(t); o.stop(t+0.75);
+}
+function synthClash(n){
+  const ctx = AC(), t = ctx.currentTime;
+  const buf = ctx.createBuffer(1, ctx.sampleRate*0.25, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/d.length, 2);
+  const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = buf; f.type="highpass"; f.frequency.value = 900+n*300; g.gain.value = 0.6;
+  s.connect(f).connect(g).connect(ctx.destination); s.start(t);
+}
+function stopHum(){
+  if(humNode){ try{humNode.o.stop();}catch(e){} humNode=null; }
+  if(humAudio){ humAudio.pause(); humAudio=null; }
+  humPlayingFor = -1;
+  document.querySelectorAll("[data-hum]").forEach(b=>b.textContent="Hum");
+}
+function synthHumToggle(n){
+  if(humPlayingFor===n){ stopHum(); return; }
+  stopHum();
+  const ctx = AC();
+  const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+  o.type="sawtooth"; o.frequency.value = 65+n*18;
+  o2.type="sine"; o2.frequency.value = (65+n*18)*1.02;
+  g.gain.value = 0.18;
+  o.connect(g); o2.connect(g); g.connect(ctx.destination);
+  o.start(); o2.start();
+  humNode = {o, o2:o2, g}; humPlayingFor = n;
+}
+function findWav(sf, kind){
+  if(!sf.wavs) return null;
+  const pats = {hum:/^hum/i, ignite:/^(out|poweron|on)\d*\.wav$/i, clash:/^clash/i};
+  for(const [name,h] of sf.wavs) if(pats[kind].test(name)) return h;
+  return null;
+}
+async function playFont(sf, kind){
+  if(sf.demo || !findWav(sf,kind)){
+    if(kind==="ignite") synthIgnite(sf.n);
+    else if(kind==="clash") synthClash(sf.n);
+    else synthHumToggle(sf.n);
+    return !sf.demo && kind!=="hum" ? status("No "+kind+" wav in this font — played synth") : undefined;
+  }
+  const h = findWav(sf,kind);
+  const url = URL.createObjectURL(await h.getFile());
+  if(kind==="hum"){
+    if(humPlayingFor===sf.n){ stopHum(); return; }
+    stopHum();
+    humAudio = new Audio(url); humAudio.loop = true; humAudio.play();
+    humPlayingFor = sf.n;
+  } else new Audio(url).play();
+}
+async function scanSoundFonts(){
+  soundFonts = [];
+  if(!dirHandle){
+    // demo entries mirror the config fonts
+    soundFonts = fonts.map(f=>({name:"Demo font "+f.n+" (synth sound)", n:f.n, demo:true}));
+  } else {
+    for await (const entry of dirHandle.values()){
+      if(entry.kind!=="directory") continue;
+      const m = entry.name.match(/^(\d+)/);
+      if(!m) continue;
+      const wavs = new Map();
+      try{ for await (const f of entry.values()) if(f.kind==="file" && /\.wav$/i.test(f.name)) wavs.set(f.name, f); }catch(e){}
+      if(wavs.size) soundFonts.push({name:entry.name, n:+m[1], demo:false, dir:entry, wavs});
+    }
+    soundFonts.sort((a,b)=>a.n-b.n);
+  }
+  renderSoundFonts();
+}
+function renderSoundFonts(){
+  const list = $("soundFontList"); list.innerHTML = "";
+  $("sfNote").textContent = dirHandle
+    ? soundFonts.length+" font folder(s) found on the card"
+    : "Demo mode: synth sounds so you can hear each font differ. Plug the saber in for the real wavs.";
+  $("btnAddFont").disabled = !dirHandle;
+  soundFonts.forEach(sf=>{
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `
+      <div><label>${sf.name}</label><small>${sf.demo ? "synthesized preview" : sf.wavs.size+" wav files"}</small></div>
+      <div style="display:flex; gap:8px;">
+        <button style="padding:6px 12px;font-size:12px" data-k="ignite">Ignite</button>
+        <button style="padding:6px 12px;font-size:12px" data-k="hum" data-hum>Hum</button>
+        <button style="padding:6px 12px;font-size:12px" data-k="clash">Clash</button>
+        ${sf.demo?"":'<button style="padding:6px 12px;font-size:12px;border-color:#5a2430" data-k="del">Remove</button>'}
+      </div>`;
+    row.querySelectorAll("button").forEach(b=>b.addEventListener("click",async ()=>{
+      const k = b.dataset.k;
+      if(k==="del"){
+        if(!confirm(`Really delete font folder "${sf.name}" from the saber card? This removes its sound files.`)) return;
+        try{ await dirHandle.removeEntry(sf.name,{recursive:true}); status("Deleted "+sf.name); scanSoundFonts(); }
+        catch(e){ status("Delete failed: "+e.message); }
+        return;
+      }
+      if(k==="hum"){ await playFont(sf,"hum"); b.textContent = humPlayingFor===sf.n ? "Stop" : "Hum"; }
+      else playFont(sf,k);
+    }));
+    list.appendChild(row);
+  });
+  if(!soundFonts.length) list.innerHTML = '<div class="unknown-note">No font folders found.</div>';
+}
+async function addFontFromFolder(){
+  if(!dirHandle) return;
+  let src;
+  try{ src = await window.showDirectoryPicker(); }catch(e){ return; }
+  const wavs = [];
+  for await (const f of src.values()) if(f.kind==="file" && /\.(wav|txt|ini)$/i.test(f.name)) wavs.push(f);
+  if(!wavs.length) return status("No wav files in that folder");
+  const nextN = Math.max(0,...soundFonts.filter(s=>!s.demo).map(s=>s.n))+1;
+  const destName = nextN+"-"+src.name.replace(/^\d+[-_ ]*/,"");
+  try{
+    const dest = await dirHandle.getDirectoryHandle(destName,{create:true});
+    for(const f of wavs){
+      const data = await (await f.getFile()).arrayBuffer();
+      const out = await dest.getFileHandle(f.name,{create:true});
+      const w = await out.createWritable(); await w.write(data); await w.close();
+    }
+    status("Added font "+destName+" ("+wavs.length+" files)");
+    scanSoundFonts();
+  }catch(e){ status("Copy failed: "+e.message); }
+}
+$("btnAddFont").addEventListener("click",addFontFromFolder);
+
+/* ---------- BLE explorer (experimental) ---------- */
+/* Candidate service UUIDs: common UART/config services used by saber boards.
+   Web Bluetooth only exposes services we declare here. */
+const BLE_CANDIDATES = [
+  "0000ffe0-0000-1000-8000-00805f9b34fb",
+  "0000fff0-0000-1000-8000-00805f9b34fb",
+  "0000ff00-0000-1000-8000-00805f9b34fb",
+  "0000ae00-0000-1000-8000-00805f9b34fb",
+  "6e400001-b5a3-f393-e0a9-e50e24dcca9e", // Nordic UART
+  "49535343-fe7d-4ae5-8fa9-9fafd205e455", // Microchip transparent UART
+  "battery_service","device_information","generic_access"
+];
+let bleWriteChar = null;
+const bleLog = msg => { const l=$("bleLog"); l.textContent += "\n"+msg; l.scrollTop = l.scrollHeight; };
+const toHex = buf => [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join(" ");
+
+async function bleConnect(){
+  if(!navigator.bluetooth) return status("No Web Bluetooth — use Chrome");
+  let device;
+  try{
+    device = await navigator.bluetooth.requestDevice({acceptAllDevices:true, optionalServices:BLE_CANDIDATES});
+  }catch(e){ return; }
+  $("bleLog").textContent = "Device: "+(device.name||"(no name)")+" ["+device.id+"]";
+  device.addEventListener("gattserverdisconnected",()=>{ bleLog("!! disconnected"); $("bleSend").disabled=true; bleWriteChar=null; });
+  try{
+    const server = await device.gatt.connect();
+    bleLog("GATT connected. Reading services...");
+    const services = await server.getPrimaryServices();
+    if(!services.length) bleLog("No accessible services (may need more UUIDs in the candidate list).");
+    for(const s of services){
+      bleLog("service "+s.uuid);
+      const chars = await s.getCharacteristics();
+      for(const c of chars){
+        const p = c.properties;
+        const caps = ["read","write","writeWithoutResponse","notify","indicate"].filter(k=>p[k]).join(",");
+        bleLog("  char "+c.uuid+"  ["+caps+"]");
+        if((p.write||p.writeWithoutResponse) && !bleWriteChar){ bleWriteChar = c; bleLog("  -> selected as write channel"); }
+        if(p.notify){
+          try{
+            await c.startNotifications();
+            c.addEventListener("characteristicvaluechanged",ev=>bleLog("<< "+toHex(ev.target.value.buffer)));
+            bleLog("  -> notifications ON");
+          }catch(e){}
+        }
+        if(p.read){
+          try{ const v = await c.readValue(); if(v.byteLength) bleLog("  value: "+toHex(v.buffer)); }catch(e){}
+        }
+      }
+    }
+    $("bleSend").disabled = !bleWriteChar;
+    bleLog(bleWriteChar ? "Ready. Type hex bytes and Send to experiment." : "No writable characteristic found.");
+  }catch(e){ bleLog("Error: "+e.message); }
+}
+
+async function bleSend(){
+  if(!bleWriteChar) return;
+  const bytes = $("bleHex").value.trim().split(/[\s,]+/).filter(Boolean).map(h=>parseInt(h,16));
+  if(!bytes.length || bytes.some(isNaN)) return status("Type hex bytes like: AA 01 FF");
+  try{
+    await bleWriteChar.writeValue(new Uint8Array(bytes));
+    bleLog(">> "+bytes.map(b=>b.toString(16).padStart(2,"0")).join(" "));
+  }catch(e){ bleLog("Write failed: "+e.message); }
+}
+
+$("btnBle").addEventListener("click",()=>{
+  const p = $("blePanel");
+  p.style.display = p.style.display==="none" ? "block" : "none";
+  if(p.style.display==="block") p.scrollIntoView({behavior:"smooth"});
+});
+$("bleConnect").addEventListener("click",bleConnect);
+$("bleSend").addEventListener("click",bleSend);
+
+$("btnOpen").addEventListener("click",openDrive);
+$("btnSave").addEventListener("click",save);
+$("btnDemo").addEventListener("click",loadDemo);
+window.addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+</script>
+</body>
+</html>
