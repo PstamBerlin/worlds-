@@ -1,0 +1,353 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Picture Machine — by Peter Stam</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#161310;--panel:#1F1A15;--card:#2A241D;--ink:#F4EEE4;--dim:#A79A88;--line:#3A332B;--accent:#D85A30;--teal:#12857E}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:'Space Mono',ui-monospace,monospace}
+header{padding:20px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px}
+header h1{font-family:Sora,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.4px}
+header .b{color:var(--accent)}
+header .sub{margin-left:auto;font-family:'Space Mono',monospace;font-size:12px;color:var(--dim)}
+.wrap{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 63px)}
+@media(max-width:860px){.wrap{grid-template-columns:1fr}}
+.panel{background:var(--panel);border-right:1px solid var(--line);padding:20px;overflow-y:auto;max-height:calc(100vh - 63px)}
+.stage{padding:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.drop{border:2px dashed var(--line);border-radius:14px;width:100%;max-width:700px;aspect-ratio:4/3;display:flex;
+  align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--dim);cursor:pointer;text-align:center;padding:20px;transition:.15s}
+.drop:hover,.drop.over{border-color:var(--accent);color:var(--ink)}
+.drop svg{width:40px;height:40px;opacity:.6}
+canvas{max-width:100%;max-height:72vh;border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:none}
+.grp{margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.grp:last-child{border:none}
+.grp h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mode{border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:9px;padding:12px 8px;cursor:pointer;
+  font-family:'Space Mono',monospace;font-size:12px;transition:.15s}
+.mode:hover{border-color:var(--ink);color:var(--ink)}
+.mode.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.seg button{flex:1 0 auto;border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:7px;padding:8px 10px;
+  cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;transition:.12s}
+.seg button.on{background:var(--card);border-color:var(--accent);color:var(--ink)}
+label.ctl{display:block;margin:12px 0;font-size:13px;color:var(--dim)}
+label.ctl .v{float:right;font-family:'Space Mono',monospace;color:var(--ink);font-size:12px}
+input[type=range]{width:100%;margin-top:8px;accent-color:var(--accent)}
+.toggle{display:flex;align-items:center;justify-content:space-between;margin:12px 0;font-size:13px;color:var(--dim);cursor:pointer}
+.sw{width:42px;height:24px;border-radius:100px;background:var(--card);border:1px solid var(--line);position:relative;transition:.15s;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--dim);transition:.15s}
+.toggle.on .sw{background:var(--accent);border-color:var(--accent)}
+.toggle.on .sw::after{left:21px;background:#fff}
+.btn{width:100%;border:none;border-radius:10px;padding:13px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px;cursor:pointer}
+.btn.go{background:var(--accent);color:#fff;margin-top:4px}
+.btn.dl{background:var(--teal);color:#fff;margin-top:8px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.hint{font-size:12px;color:var(--dim);line-height:1.5;margin-top:10px}
+.count{font-family:'Space Mono',monospace;font-size:12px;color:var(--dim);text-align:center}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+</style></head>
+<body>
+<header><h1>Picture Machine<span class="b">.</span></h1><span class="sub">paint &#183; comic &#183; pixel &#183; lithophane &#8212; in your browser</span></header>
+<div class="wrap">
+  <div class="panel">
+    <div class="grp"><h3>1 &#183; Machine</h3>
+      <div class="modes" id="modes">
+        <button class="mode on" data-m="paint">Paint</button>
+        <button class="mode" data-m="comic">Comic</button>
+        <button class="mode" data-m="pixel">Pixel</button>
+        <button class="mode" data-m="litho">Lithophane</button>
+      </div>
+    </div>
+    <div id="controls"></div>
+    <div class="grp"><h3>Make it</h3>
+      <button class="btn go" id="run" disabled>Run</button>
+      <button class="btn dl" id="dl" disabled>Download</button>
+      <p class="hint" id="hint">Drop a photo on the right. Everything happens on your own computer &#8212; nothing is uploaded.</p>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="drop" id="drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg><div><b>Drop a photo here</b><br>or click to choose one</div></div>
+    <canvas id="cv"></canvas><div class="count" id="count"></div>
+    <input type="file" id="file" accept="image/*" hidden>
+  </div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d',{willReadFrequently:true});
+const drop=$('#drop'),file=$('#file'),run=$('#run'),dl=$('#dl'),hint=$('#hint'),count=$('#count');
+let img=null,mode='paint',outURL=null,outName='',state={};
+
+// ---------- control definitions (the vocabulary of Peter's Python tools) ----------
+const SEG={
+ paintStyle:{key:'pstyle',label:'Brush',opts:['chunky','normal','fine','ultrafine'],def:'normal'},
+ comicStyle:{key:'cstyle',label:'Style',opts:['clean','retro','press','poster','manga'],def:'clean'},
+ lithoShape:{key:'shape',label:'Shape',opts:['rect','rounded','circle','hex'],def:'rounded'},
+};
+const RANGES={
+ paint:[['pseed','Seed (change = new look)',1,99,7,1]],
+ comic:[['colors','Colours',3,16,8,1],['ink','Ink thickness',0,3,1.2,0.1],['sat','Colour punch',0.4,1.8,1.2,0.05]],
+ pixel:[['px','Pixel size',2,28,10,1],['pcolors','Colours',3,32,16,1]],
+ litho:[['width','Width (mm)',40,180,90,5],['minmm','Thinnest (mm)',0.6,1.2,0.8,0.1],['maxmm','Thickest (mm)',2,5,3,0.5],['border','Border (mm)',0,8,0,0.5]],
+};
+const TOGGLES={
+ paint:[['canvas','Linen canvas',true],['bristle','Realistic brushes',true]],
+ comic:[['dots','Halftone dots',true],['cmyk','CMYK misregister',false],['panel','Panel frame',true]],
+ pixel:[],
+ litho:[['invert','Invert (negative)',false],['hole','Hanging hole',false]],
+};
+function seg(def){
+  const wrap=document.createElement('div');
+  const l=document.createElement('label');l.className='ctl';l.textContent=def.label;wrap.appendChild(l);
+  const s=document.createElement('div');s.className='seg';
+  def.opts.forEach(o=>{const b=document.createElement('button');b.textContent=o;b.dataset.v=o;
+    if((state[def.key]||def.def)===o)b.classList.add('on');
+    b.onclick=()=>{state[def.key]=o;[...s.children].forEach(c=>c.classList.toggle('on',c===b));};
+    s.appendChild(b);});
+  if(!state[def.key])state[def.key]=def.def;
+  wrap.appendChild(s);return wrap;
+}
+function range([id,lbl,mn,mx,df,st]){
+  const l=document.createElement('label');l.className='ctl';
+  l.innerHTML=`${lbl}<span class="v" id="v_${id}"></span><input type="range" id="c_${id}" min="${mn}" max="${mx}" step="${st}" value="${state[id]??df}">`;
+  const inp=l.querySelector('input'),v=l.querySelector('.v');
+  const show=()=>{v.textContent=inp.value;state[id]=parseFloat(inp.value);};inp.oninput=show;
+  if(state[id]==null)state[id]=df; show();return l;
+}
+function toggle([id,lbl,df]){
+  if(state[id]==null)state[id]=df;
+  const t=document.createElement('div');t.className='toggle'+(state[id]?' on':'');
+  t.innerHTML=`<span>${lbl}</span><span class="sw"></span>`;
+  t.onclick=()=>{state[id]=!state[id];t.classList.toggle('on',state[id]);};
+  return t;
+}
+function drawControls(){
+  const box=$('#controls');box.innerHTML='';
+  const g=document.createElement('div');g.className='grp';
+  g.innerHTML='<h3>2 &#183; Settings</h3>';
+  if(mode==='paint')g.appendChild(seg(SEG.paintStyle));
+  if(mode==='comic')g.appendChild(seg(SEG.comicStyle));
+  if(mode==='litho')g.appendChild(seg(SEG.lithoShape));
+  RANGES[mode].forEach(r=>g.appendChild(range(r)));
+  TOGGLES[mode].forEach(t=>g.appendChild(toggle(t)));
+  box.appendChild(g);
+  run.textContent=mode==='litho'?'Make STL':'Run';
+}
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.mode').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  mode=b.dataset.m;drawControls();
+});
+drawControls();
+
+// ---------- image loading ----------
+drop.onclick=()=>file.click();
+file.onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image'))load(f);});
+function load(f){const im=new Image();im.onload=()=>{img=im;drop.style.display='none';cv.style.display='block';run.disabled=false;
+  const W=Math.min(950,im.width),s=W/im.width;cv.width=W;cv.height=Math.round(im.height*s);ctx.drawImage(im,0,0,cv.width,cv.height);
+  hint.textContent='Press Run to apply the effect.';};im.src=URL.createObjectURL(f);}
+function srcData(W,bg){const c=document.createElement('canvas'),s=W/img.width;c.width=W;c.height=Math.round(img.height*s);
+  const x=c.getContext('2d'); if(bg){x.fillStyle=bg;x.fillRect(0,0,c.width,c.height);} x.drawImage(img,0,0,c.width,c.height);
+  return{d:x.getImageData(0,0,c.width,c.height),w:c.width,h:c.height};}
+// a soft blur of the colours to sample from -> smoother, nicer paint (like the Python's colour reference)
+function boxBlur(d,w,h,r){const src=d.data,out=new Uint8ClampedArray(src.length),n=(2*r+1);
+  for(let c=0;c<3;c++){const tmp=new Float32Array(w*h);
+    for(let y=0;y<h;y++){let sum=0;for(let x=-r;x<=r;x++)sum+=src[(y*w+Math.min(w-1,Math.max(0,x)))*4+c];
+      for(let x=0;x<w;x++){tmp[y*w+x]=sum/n;const add=Math.min(w-1,x+r+1),sub=Math.max(0,x-r);sum+=src[(y*w+add)*4+c]-src[(y*w+sub)*4+c];}}
+    for(let x=0;x<w;x++){let sum=0;for(let y=-r;y<=r;y++)sum+=tmp[Math.min(h-1,Math.max(0,y))*w+x];
+      for(let y=0;y<h;y++){out[(y*w+x)*4+c]=sum/n;const add=Math.min(h-1,y+r+1),sub=Math.max(0,y-r);sum+=tmp[add*w+x]-tmp[sub*w+x];}}}
+  return out;}
+function lum(d){const L=new Float32Array(d.width*d.height);for(let i=0,p=0;i<d.data.length;i+=4,p++)L[p]=.299*d.data[i]+.587*d.data[i+1]+.114*d.data[i+2];return L;}
+function sobel(L,w,h){const E=new Float32Array(w*h);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;
+  const gx=-L[i-w-1]-2*L[i-1]-L[i+w-1]+L[i-w+1]+2*L[i+1]+L[i+w+1];
+  const gy=-L[i-w-1]-2*L[i-w]-L[i-w+1]+L[i+w-1]+2*L[i+w]+L[i+w+1];E[i]=Math.hypot(gx,gy);}return E;}
+function rng(seed){let s=seed*9301+49297;return()=>{s=(s*9301+49297)%233280;return s/233280;};}
+function posterize(d,k){const step=255/(k-1);for(let i=0;i<d.data.length;i+=4)for(let j=0;j<3;j++)d.data[i+j]=Math.round(Math.round(d.data[i+j]/step)*step);return d;}
+function saturate(d,f){for(let i=0;i<d.data.length;i+=4){const r=d.data[i],g=d.data[i+1],b=d.data[i+2];const a=(r+g+b)/3;
+  d.data[i]=Math.max(0,Math.min(255,a+(r-a)*f));d.data[i+1]=Math.max(0,Math.min(255,a+(g-a)*f));d.data[i+2]=Math.max(0,Math.min(255,a+(b-a)*f));}}
+
+// ---------- PAINT (faithful port of paint_anything.py) ----------
+// Exact brush levels: (radius, error_threshold). thresh -1 = paint everywhere.
+const LAYERS={   // small strokes everywhere, but few enough to watch appear one by one
+  chunky:[[14,-1],[8,55]],
+  normal:[[12,-1],[7,48],[4,60]],
+  fine:[[10,-1],[6,44],[4,52],[2,66]],
+  ultrafine:[[9,-1],[6,40],[3,48],[2,60]],
+};
+const MODEW={chunky:560,normal:620,fine:680,ultrafine:720};
+let paintAbort=false;
+function runPaint(){                       // animated: you watch it paint, layer by layer
+  return new Promise(resolve=>{
+    const W=Math.min(MODEW[state.pstyle],cv.width);const {d,w,h}=srcData(W,'#EFE6D4');cv.width=w;cv.height=h;
+    const tgt=boxBlur(d,w,h,2);
+    const L=lum(d);const gxA=new Float32Array(w*h),gyA=new Float32Array(w*h);
+    for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;gxA[i]=L[i+1]-L[i-1];gyA[i]=L[i+w]-L[i-w];}
+    const rnd=rng(state.pseed|0);const bristle=state.bristle;
+    ctx.clearRect(0,0,w,h);ctx.fillStyle=state.canvas?'rgb(239,230,212)':'rgb(20,18,16)';ctx.fillRect(0,0,w,h);
+
+    // build every stroke first (using a per-layer snapshot, like the Python squint rule),
+    // then draw them a few hundred per frame so the painting appears in front of you.
+    const ops=[];
+    for(const [R,thr0] of LAYERS[state.pstyle]){
+      const thr=thr0<0?-1:thr0;   // lower threshold -> more small strokes, fewer big flat blobs
+      const gap=Math.max(1,R);
+      ops.push({snapshot:true});                   // marker: snapshot canvas here (done at draw time)
+      const layerOps=[];
+      for(let gy=0;gy<h;gy+=gap)for(let gx=0;gx<w;gx+=gap){
+        const px=Math.min(w-1,Math.max(0,(gx+(rnd()*gap-gap/2))|0));
+        const py=Math.min(h-1,Math.max(0,(gy+(rnd()*gap-gap/2))|0));
+        const i=py*w+px,i4=i*4;
+        const jc=R<4?3:8;let cr=tgt[i4]+(rnd()*2-1)*jc,cg=tgt[i4+1]+(rnd()*2-1)*jc,cb=tgt[i4+2]+(rnd()*2-1)*jc;
+        cr=cr<0?0:cr>255?255:cr;cg=cg<0?0:cg>255?255:cg;cb=cb<0?0:cb>255?255:cb;
+        const gmag=Math.hypot(gxA[i]||0,gyA[i]||0);
+        const pts=[[px,py]];let dx,dy,x=px,y=py;
+        if(gmag<6){const ang=(px*0.7+py*1.3);dx=Math.cos(ang);dy=Math.sin(ang);x=px+dx*R;y=py+dy*R;
+          if(x>=0&&y>=0&&x<w&&y<h)pts.push([x,y]);}      // small directional stroke, never a big blob
+        else{dx=0;dy=0;const steps=4+((rnd()*8)|0);
+          for(let st=0;st<steps;st++){const ii=((y|0)*w+(x|0));let g_x=gxA[ii]||0,g_y=gyA[ii]||0;
+            let nx=-g_y,ny=g_x;const nl=Math.hypot(nx,ny);if(nl<1e-4)break;nx/=nl;ny/=nl;
+            if(dx*nx+dy*ny<0){nx=-nx;ny=-ny;}dx=dx*0.35+nx*0.65;dy=dy*0.35+ny*0.65;const dl=Math.hypot(dx,dy)||1;dx/=dl;dy/=dl;
+            x+=dx*R;y+=dy*R;if(x<0||y<0||x>=w||y>=h)break;
+            const ti=((y|0)*w+(x|0))*4;if(Math.abs(tgt[ti]-cr)+Math.abs(tgt[ti+1]-cg)+Math.abs(tgt[ti+2]-cb)>70)break;pts.push([x,y]);}}
+        layerOps.push({px,py,i4,thr,R,cr:cr|0,cg:cg|0,cb:cb|0,pts,bw:2*R*(0.75+rnd()*0.5),bristle:bristle&&R>=8});
+      }
+      ops.push({layer:layerOps,idx:0});
+    }
+
+    // animate
+    paintAbort=false;let oi=0,done=0,snap=null;const total=ops.reduce((a,o)=>a+(o.layer?o.layer.length:0),0);
+    const perFrame=total+1;   // draw it all at once, no visible sweep
+    function frame(){
+      if(paintAbort){resolve(0);return;}
+      let budget=perFrame;
+      while(budget>0 && oi<ops.length){
+        const o=ops[oi];
+        if(o.snapshot){snap=ctx.getImageData(0,0,w,h).data;oi++;continue;}
+        const arr=o.layer;
+        while(budget>0 && o.idx<arr.length){
+          const k=arr[o.idx++];done++;budget--;
+          if(k.thr>=0&&snap){const e=Math.abs(snap[k.i4]-tgt[k.i4])+Math.abs(snap[k.i4+1]-tgt[k.i4+1])+Math.abs(snap[k.i4+2]-tgt[k.i4+2]);if(e<=k.thr)continue;}
+          ctx.strokeStyle=`rgb(${k.cr},${k.cg},${k.cb})`;ctx.lineWidth=k.bw;ctx.lineJoin='round';ctx.lineCap='round';
+          ctx.beginPath();ctx.moveTo(k.pts[0][0],k.pts[0][1]);for(let m=1;m<k.pts.length;m++)ctx.lineTo(k.pts[m][0],k.pts[m][1]);ctx.stroke();
+          if(k.bristle){ctx.strokeStyle=`rgba(${Math.min(255,k.cr+26)},${Math.min(255,k.cg+26)},${Math.min(255,k.cb+26)},.5)`;ctx.lineWidth=Math.max(1,k.R*0.5);
+            ctx.beginPath();ctx.moveTo(k.pts[0][0],k.pts[0][1]);for(let m=1;m<k.pts.length;m++)ctx.lineTo(k.pts[m][0],k.pts[m][1]);ctx.stroke();}
+        }
+        if(o.idx>=arr.length)oi++;
+      }
+      
+      if(oi<ops.length)requestAnimationFrame(frame);
+      else{count.textContent=`${done.toLocaleString()} strokes · ${state.pstyle}`;resolve(done);}
+    }
+    requestAnimationFrame(frame);
+  });
+}
+// ---------- COMIC ----------
+const CSTYLE={clean:{paper:[255,252,246],dots:.55,cmyk:0},retro:{paper:[247,236,208],dots:.85,cmyk:1},
+ press:{paper:[250,243,226],dots:.7,cmyk:1},poster:{paper:[253,248,238],dots:0},manga:{paper:[252,250,245],dots:1,gray:1}};
+function runComic(){
+  const {d,w,h}=srcData(Math.min(900,cv.width),'#FFFFFF');cv.width=w;cv.height=h;
+  const cfg=CSTYLE[state.cstyle];
+  if(!cfg.gray)saturate(d,state.sat);
+  const L=lum(d),E=sobel(L,w,h);
+  if(cfg.gray){for(let i=0;i<d.data.length;i+=4){const v=L[i/4];d.data[i]=d.data[i+1]=d.data[i+2]=v;}}
+  posterize(d,state.colors);
+  const out=ctx.createImageData(w,h);
+  const doDots=state.dots&&cfg.dots>0, doCmyk=state.cmyk&&cfg.cmyk, ink=state.ink, th=ink?(150-ink*36):1e9;
+  const pap=cfg.paper;
+  for(let p=0,i=0;p<w*h;p++,i+=4){
+    let r=d.data[i],g=d.data[i+1],b=d.data[i+2];
+    // paper shows through the lightest areas
+    if(r>235&&g>235&&b>235){r=pap[0];g=pap[1];b=pap[2];}
+    if(doDots){const x=p%w,y=(p/w)|0,l=L[p]/255,cell=6,cx=x%cell-cell/2,cy=y%cell-cell/2,rad=(1-l)*cell*.6;
+      if(Math.hypot(cx,cy)<rad*.75&&l>.12&&l<.9){r*=.78;g*=.78;b*=.78;}}
+    out.data[i]=r;out.data[i+1]=g;out.data[i+2]=b;out.data[i+3]=255;
+  }
+  // ink
+  for(let p=0,i=0;p<w*h;p++,i+=4){if(ink&&E[p]>th){out.data[i]=28;out.data[i+1]=22;out.data[i+2]=20;}}
+  ctx.putImageData(out,0,0);
+  if(doCmyk){ // cheap plate misregister: shift red right, blue down
+    const im=ctx.getImageData(0,0,w,h),a=im.data,c=new Uint8ClampedArray(a);
+    const m=2;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;
+      const rx=(y*w+Math.min(w-1,x-m))*4, by=(Math.min(h-1,y+m)*w+x)*4;
+      a[i]=c[rx];a[i+2]=c[by+2];}ctx.putImageData(im,0,0);}
+  if(state.panel){ctx.strokeStyle='rgb(28,22,20)';ctx.lineWidth=Math.max(6,w/90);ctx.strokeRect(ctx.lineWidth/2,ctx.lineWidth/2,w-ctx.lineWidth,h-ctx.lineWidth);}
+  count.textContent=`${state.cstyle} · ${state.colors} colours`;
+}
+
+// ---------- PIXEL ----------
+function runPixel(){const px=state.px,k=state.pcolors;const sw=Math.max(2,Math.round(cv.width/px)),sh=Math.max(2,Math.round(cv.height/px));
+  const t=document.createElement('canvas');t.width=sw;t.height=sh;const tx=t.getContext('2d');tx.fillStyle='#FFFFFF';tx.fillRect(0,0,sw,sh);tx.imageSmoothingEnabled=true;tx.drawImage(img,0,0,sw,sh);
+  let dd=tx.getImageData(0,0,sw,sh);posterize(dd,Math.max(2,Math.round(Math.cbrt(k))+1));tx.putImageData(dd,0,0);
+  ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(t,0,0,sw,sh,0,0,cv.width,cv.height);
+  count.textContent=`${sw}×${sh} blocks`;}
+
+// ---------- LITHOPHANE (shaped) -> STL ----------
+function runLitho(){
+  const Wmm=state.width,minT=state.minmm,maxT=state.maxmm,inv=state.invert,shape=state.shape,bmm=state.border;
+  const res=3.0,nx=Math.min(340,Math.round(Wmm*res)),ny=Math.round(nx*img.height/img.width);
+  const t=document.createElement('canvas');t.width=nx;t.height=ny;{const tc=t.getContext('2d');tc.fillStyle='#FFFFFF';tc.fillRect(0,0,nx,ny);tc.drawImage(img,0,0,nx,ny);}
+  const d=t.getContext('2d').getImageData(0,0,nx,ny).data;
+  const Hmm=Wmm*ny/nx,sx=Wmm/(nx-1),sy=Hmm/(ny-1);
+  // node mask by shape
+  const inMask=(x,y)=>{const X=x/(nx-1)*Wmm,Y=y/(ny-1)*Hmm,cx=Wmm/2,cy=Hmm/2;
+    if(shape==='circle')return Math.hypot(X-cx,Y-cy)<=Math.min(Wmm,Hmm)/2;
+    if(shape==='hex'){const R=Math.min(Hmm/2,Wmm/Math.sqrt(3)),ap=R*Math.sqrt(3)/2;
+      for(const a of[0,60,120]){const th=a*Math.PI/180;if(Math.abs((X-cx)*Math.cos(th)+(Y-cy)*Math.sin(th))>ap)return false;}return true;}
+    if(shape==='rounded'){const r=Math.min(Wmm,Hmm)*0.08;
+      const dx=Math.max(0,r-Math.min(X,Wmm-X)),dy=Math.max(0,r-Math.min(Y,Hmm-Y));return Math.hypot(dx,dy)<=r||dx===0||dy===0;}
+    return true;};
+  const mask=new Uint8Array(nx*ny);for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)mask[y*nx+x]=inMask(x,y)?1:0;
+  // hanging hole
+  if(state.hole){const hx=nx/2,hy=ny*0.06+6,hr=2.2/sx;for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)if(Math.hypot(x-hx,y-hy)<hr)mask[y*nx+x]=0;}
+  // distance to edge (chamfer) for border
+  const dist=new Float32Array(nx*ny).fill(1e9);
+  for(let p=0;p<nx*ny;p++)if(!mask[p])dist[p]=0;
+  for(let y=1;y<ny;y++)for(let x=1;x<nx;x++){const i=y*nx+x;if(mask[i])dist[i]=Math.min(dist[i],dist[i-1]+1,dist[i-nx]+1);}
+  for(let y=ny-2;y>=0;y--)for(let x=nx-2;x>=0;x--){const i=y*nx+x;if(mask[i])dist[i]=Math.min(dist[i],dist[i+1]+1,dist[i+nx]+1);}
+  const borderPx=bmm/sx;
+  const H=new Float32Array(nx*ny);
+  for(let p=0;p<nx*ny;p++){if(!mask[p]){H[p]=0;continue;}
+    let l=(.299*d[p*4]+.587*d[p*4+1]+.114*d[p*4+2])/255;if(inv)l=1-l;let th=minT+(1-l)*(maxT-minT);
+    if(bmm>0&&dist[p]<=borderPx)th=maxT;H[p]=th;}
+  // preview
+  cv.width=nx;cv.height=ny;const pv=ctx.createImageData(nx,ny);
+  for(let p=0;p<nx*ny;p++){if(!mask[p]){pv.data[p*4]=18;pv.data[p*4+1]=18;pv.data[p*4+2]=22;pv.data[p*4+3]=255;continue;}
+    const v=Math.round(255*Math.exp(-1.35/(maxT-minT)*(H[p]-minT)));pv.data[p*4]=v;pv.data[p*4+1]=v*.98;pv.data[p*4+2]=v*.93;pv.data[p*4+3]=255;}
+  ctx.putImageData(pv,0,0);
+  // STL
+  const tris=[],N=(x,y,z)=>[x*sx,z,(ny-1-y)*sy];
+  const cell=(x,y)=>mask[y*nx+x]&&mask[y*nx+x+1]&&mask[(y+1)*nx+x]&&mask[(y+1)*nx+x+1];
+  const quad=(a,b,c,dd)=>tris.push(a,b,c,a,c,dd);
+  for(let y=0;y<ny-1;y++)for(let x=0;x<nx-1;x++){if(!cell(x,y))continue;
+    const f00=N(x,y,H[y*nx+x]),f10=N(x+1,y,H[y*nx+x+1]),f11=N(x+1,y+1,H[(y+1)*nx+x+1]),f01=N(x,y+1,H[(y+1)*nx+x]);
+    const b00=N(x,y,0),b10=N(x+1,y,0),b11=N(x+1,y+1,0),b01=N(x,y+1,0);
+    quad(f00,f10,f11,f01);quad(b00,b01,b11,b10);
+    if(x===0||!cell(x-1,y))quad(f00,f01,b01,b00);
+    if(x===nx-2||!cell(x+1,y))quad(f11,f10,b10,b11);
+    if(y===0||!cell(x,y-1))quad(f10,f00,b00,b10);
+    if(y===ny-2||!cell(x,y+1))quad(f01,f11,b11,b01);}
+  const buf=new ArrayBuffer(84+tris.length/3*50),dv=new DataView(buf);dv.setUint32(80,tris.length/3,true);let o=84;
+  for(let i=0;i<tris.length;i+=3){o+=12;for(let k=0;k<3;k++){dv.setFloat32(o,tris[i+k][0],true);dv.setFloat32(o+4,tris[i+k][1],true);dv.setFloat32(o+8,tris[i+k][2],true);o+=12;}dv.setUint16(o,0,true);o+=2;}
+  if(outURL)URL.revokeObjectURL(outURL);outURL=URL.createObjectURL(new Blob([buf],{type:'model/stl'}));outName='lithophane.stl';dl.disabled=false;
+  count.textContent=`${(tris.length/3).toLocaleString()} triangles · ${shape} · ${Wmm}×${Math.round(Hmm)}mm`;
+}
+
+async function doRun(){
+  run.disabled=true;run.innerHTML='<span class="spin"></span>Painting';dl.disabled=true;
+  if(mode==='paint'){await runPaint();}
+  else{await new Promise(r=>setTimeout(r,20));
+    if(mode==='comic')runComic();else if(mode==='pixel')runPixel();
+    else if(mode==='litho'){runLitho();run.disabled=false;run.innerHTML='Make STL';return;}}
+  if(outURL)URL.revokeObjectURL(outURL);
+  cv.toBlob(bl=>{outURL=URL.createObjectURL(bl);outName=mode+'.png';dl.disabled=false;},'image/png');
+  run.disabled=false;run.innerHTML=mode==='litho'?'Make STL':'Run';
+}
+run.onclick=()=>{paintAbort=true;setTimeout(doRun,30);};
+dl.onclick=()=>{if(!outURL)return;const a=document.createElement('a');a.href=outURL;a.download=outName;a.click();};
+</script>
+</body></html>
