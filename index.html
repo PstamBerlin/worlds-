@@ -108,13 +108,43 @@ body[data-shape="sharp"] .frame.noimg::after{font-size:15px;line-height:1.6}
 body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-radius:0}
 .m-tag.typing::after{content:'88';margin-left:2px;opacity:.8;animation:blink 1s step-end infinite}
 @keyframes blink{50%{opacity:0}}
+/* ---------- phones ---------- */
+@media(max-width:600px){
+  /* an active pixel/serif world sets --fdisp/--fmono globally, so off-screen text in
+     other sections can render wider than the screen. Clip sideways so the page never
+     scrolls horizontally or jumps when a wide-font world takes over. */
+  html,body{overflow-x:clip}
+  .bar{padding:13px 18px}
+  .now{display:none}                          /* the section itself shows which world you're in */
+  .wrap{padding:0 20px}
+  /* Little One turns the whole body pixel-font; on a narrow phone that overflows
+     other sections and makes enter/exit reflow badly. Keep the pixel TITLE, but
+     read body text in a normal font so nothing spills and transitions stay smooth. */
+  body[data-shape="sharp"]{font-family:Inter,system-ui,sans-serif}
+  body[data-shape="sharp"] .kick,body[data-shape="sharp"] .mood{font-family:'Space Mono',monospace}
+  h1{font-size:clamp(37px,12vw,60px);letter-spacing:-1px}
+  .lede{font-size:16px}
+  .world h2{font-size:clamp(30px,9vw,40px)}    /* round worlds; sharp/pixel keeps its own rule */
+  .wdesc{font-size:16px}
+  .cta{padding:14px 22px}
+  /* directory rows: let them wrap instead of spilling off-screen */
+  .orow{flex-wrap:wrap;gap:2px 12px;padding:11px 0}
+  .odots{display:none}
+  .oname{flex:0 0 auto}
+  .onote{flex:1 1 auto;min-width:0}
+  .olink,.ostat{margin-left:auto}
+  .ocols{gap:30px}
+  .outro{padding:70px 0 64px}
+  .contact{gap:14px 22px}
+  .contact a.coffee{width:100%;text-align:center;padding:13px 16px}
+}
 </style></head>
 <body data-bg="#0E0E12" data-ink="#F4F1EA" data-dim="#8B8B98" data-accent="#C9A227" data-accent2="#5FD0E6" data-fdisp="Fraunces" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="dots" data-shape="soft" data-tex="dots" data-shape="soft">
 <div class="tex" id="tex-grid"></div><div class="tex" id="tex-dots"></div>
 <div class="tex" id="tex-scan"></div><div class="tex" id="tex-layers"></div>
 <div class="particles" id="particles"></div>
 <div class="prog" id="prog"></div>
-<header class="bar"><span class="brand">Peter Stam<b>.</b></span><span class="now" id="now">Everything I have made</span></header>
+<header class="bar"><span class="brand">Peter Stam</span><span class="now" id="now">Everything I have made</span></header>
 <nav class="nav"><a class="ndot" href="#little" title="Little One"></a><a class="ndot" href="#aibook" title="The AI Book Blueprint"></a><a class="ndot" href="#guide" title="Guide to 3D Printing"></a><a class="ndot" href="#money" title="Making Money with 3D Printing"></a><a class="ndot" href="#rab" title="Raise a Builder"></a><a class="ndot" href="#operation" title="The Operation Series"></a><a class="ndot" href="#kyber" title="Kyber"></a><a class="ndot" href="#chalk" title="Chalkboard"></a><a class="ndot" href="#fry" title="Fry City"></a><a class="ndot" href="#shop" title="3D — the print shop"></a><a class="ndot" href="#pic" title="Picture Machines"></a><a class="ndot" href="#cubo" title="CUBO"></a><a class="ndot" href="#find" title="Where to find it"></a></nav>
 
 <main>
@@ -207,7 +237,7 @@ body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-r
       <p class="kick">BROWSER · 1.0 · OPEN SOURCE</p>
       <h2>Chalkboard</h2>
       <p class="wdesc">A browser that is empty by default and tells nobody anything. No telemetry, no account, no server. Every setting is one line of text you can send to a friend.</p>
-      <div class="wrow"><span class="mood m-tag" data-mood="empty by default">empty by default</span></div>
+      <div class="wrow"><a class="cta" href="https://chalkboard.peterstam.eu" target="_blank" rel="noopener">Get the browser <span aria-hidden="true">&#8599;</span></a><span class="mood m-tag" data-mood="empty by default">empty by default</span></div>
       <div class="sig" data-wid="chalk"></div>
     </div>
     <div class="wart reveal"><div class="frame"><img src="i-chalkboard.png" alt="Chalkboard" loading="lazy"></div></div>
@@ -260,7 +290,7 @@ body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-r
   <section class="outro" id="find" data-bg="#0E0E12" data-ink="#F4F1EA" data-dim="#8B8B98" data-accent="#C9A227" data-accent2="#5FD0E6" data-fdisp="Fraunces" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="dots" data-shape="soft"><div class="wrap">
     <h2>Where to find it</h2>
     <p>Everything I have made, and where it actually lives. Some is online, some you download, some is still being built — said honestly.</p>
-    <div class="ocols"><div class="ogroup"><h4>Live on the web</h4><div class="orow"><span class="oname">peterstam.eu</span><span class="onote">The books</span><span class="odots"></span><a class="olink" href="https://peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">raiseabuilder.com</span><span class="onote">With my dad</span><span class="odots"></span><a class="olink" href="https://raiseabuilder.com" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">castlefood.eu</span><span class="onote">Fry City OS</span><span class="odots"></span><a class="olink" href="https://castlefood.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">github.com/PstamBerlin</span><span class="onote">My code</span><span class="odots"></span><a class="olink" href="https://github.com/PstamBerlin" target="_blank" rel="noopener">Visit &#8599;</a></div></div><div class="ogroup"><h4>Download &amp; run</h4><div class="orow"><span class="oname">Chalkboard</span><span class="onote">The browser, v1.0</span><span class="odots"></span><span class="ostat">Coming soon</span></div><div class="orow"><span class="oname">Picture Machines</span><span class="onote">Use it in the browser</span><span class="odots"></span><a class="olink" href="picture-machine.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Picture Machines (Python)</span><span class="onote">The source tools + guides</span><span class="odots"></span><a class="olink" href="picture-machines.zip" target="_blank" rel="noopener">Download &#8599;</a></div><div class="orow"><span class="oname">CUBO</span><span class="onote">Rubik&#x27;s cube solver</span><span class="odots"></span><a class="olink" href="cubo.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Kyber</span><span class="onote">Lightsaber configurator</span><span class="odots"></span><a class="olink" href="kyber.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Clover</span><span class="onote">Coupon extension</span><span class="odots"></span><span class="ostat">Coming soon</span></div><div class="orow"><span class="oname">The Operation Series</span><span class="onote">46 characters · free</span><span class="odots"></span><a class="olink" href="operation-series.zip" target="_blank" rel="noopener">Download &#8599;</a></div><div class="orow"><span class="oname">The books</span><span class="onote">Pay what you want, from €1</span><span class="odots"></span><a class="olink" href="https://peterstam.eu" target="_blank" rel="noopener">Buy &#8599;</a></div></div><div class="ogroup"><h4>Being built</h4><div class="orow"><span class="oname">Little One</span><span class="onote">Two games now · episode 3 building</span><span class="odots"></span><a class="olink" href="little-one.html" target="_blank" rel="noopener">Play &#8599;</a></div><div class="orow"><span class="oname">worlds.peterstam.eu</span><span class="onote">This page</span><span class="odots"></span><span class="ostat">You are here</span></div></div></div>
+    <div class="ocols"><div class="ogroup"><h4>Live on the web</h4><div class="orow"><span class="oname">peterstam.eu</span><span class="onote">The books</span><span class="odots"></span><a class="olink" href="https://peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">raiseabuilder.com</span><span class="onote">With my dad</span><span class="odots"></span><a class="olink" href="https://raiseabuilder.com" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">castlefood.eu</span><span class="onote">Fry City OS</span><span class="odots"></span><a class="olink" href="https://castlefood.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">github.com/PstamBerlin</span><span class="onote">My code</span><span class="odots"></span><a class="olink" href="https://github.com/PstamBerlin" target="_blank" rel="noopener">Visit &#8599;</a></div></div><div class="ogroup"><h4>Download &amp; run</h4><div class="orow"><span class="oname">Chalkboard</span><span class="onote">The browser · empty by default</span><span class="odots"></span><a class="olink" href="https://chalkboard.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">Picture Machines</span><span class="onote">Use it in the browser</span><span class="odots"></span><a class="olink" href="picture-machine.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Picture Machines (Python)</span><span class="onote">The source tools + guides</span><span class="odots"></span><a class="olink" href="picture-machines.zip" target="_blank" rel="noopener">Download &#8599;</a></div><div class="orow"><span class="oname">CUBO</span><span class="onote">Rubik&#x27;s cube solver</span><span class="odots"></span><a class="olink" href="cubo.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Kyber</span><span class="onote">Lightsaber configurator</span><span class="odots"></span><a class="olink" href="kyber.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Clover</span><span class="onote">Coupon extension</span><span class="odots"></span><span class="ostat">Coming soon</span></div><div class="orow"><span class="oname">The Operation Series</span><span class="onote">46 characters · free</span><span class="odots"></span><a class="olink" href="operation-series.zip" target="_blank" rel="noopener">Download &#8599;</a></div><div class="orow"><span class="oname">The books</span><span class="onote">Pay what you want, from €1</span><span class="odots"></span><a class="olink" href="https://peterstam.eu" target="_blank" rel="noopener">Buy &#8599;</a></div></div><div class="ogroup"><h4>Being built</h4><div class="orow"><span class="oname">Little One</span><span class="onote">Two games now · episode 3 building</span><span class="odots"></span><a class="olink" href="little-one.html" target="_blank" rel="noopener">Play &#8599;</a></div><div class="orow"><span class="oname">worlds.peterstam.eu</span><span class="onote">This page</span><span class="odots"></span><span class="ostat">You are here</span></div></div></div>
     <div class="contact">
       <span class="big">Say hello</span>
       <a href="mailto:stam.peter2015@gmail.com">stam.peter2015@gmail.com</a>
