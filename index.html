@@ -7,7 +7,7 @@
 <meta property="og:title" content="Peter Stam — everything I have made"><meta property="og:image" content="https://worlds.peterstam.eu/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,600&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=Sora:wght@600;800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Cinzel:wght@600;700&family=Fredoka:wght@500;600;700&family=Poppins:wght@600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,600&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=Sora:wght@600;800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Cinzel:wght@600;700&family=Fredoka:wght@500;600;700&family=Poppins:wght@600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0E0E12;--ink:#F4F1EA;--dim:#8B8B98;--accent:#C9A227;--accent2:#5FD0E6;
@@ -67,6 +67,11 @@ body[data-shape="sharp"] .wdesc{font-size:13px;line-height:1.9}
 .frame.noimg{display:flex;align-items:center;justify-content:center}
 .frame.noimg::after{content:attr(data-mood);font-family:var(--fdisp);font-size:clamp(20px,3vw,38px);color:var(--accent);text-align:center;padding:0 24px;transition:color var(--T),font-family var(--T)}
 body[data-shape="sharp"] .frame.noimg::after{font-size:15px;line-height:1.6}
+
+/* Broom's world is a print, so nothing in it is rounded — but the text keeps
+   its normal size, which the global "sharp" shape would have shrunk. */
+#broom .frame img,#broom .cta,#broom .sig .line,#broom .sig .lbar{border-radius:0}
+#broom .frame img{box-shadow:14px 14px 0 rgba(23,20,15,.18),0 30px 72px rgba(23,20,15,.22)}
 /* reveal on enter */
 .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
@@ -146,7 +151,7 @@ body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-r
 <div class="particles" id="particles"></div>
 <div class="prog" id="prog"></div>
 <header class="bar"><span class="brand">Peter Stam</span><span class="now" id="now">Everything I have made</span></header>
-<nav class="nav"><a class="ndot" href="#little" title="Little One"></a><a class="ndot" href="#aibook" title="The AI Book Blueprint"></a><a class="ndot" href="#guide" title="Guide to 3D Printing"></a><a class="ndot" href="#money" title="Making Money with 3D Printing"></a><a class="ndot" href="#rab" title="Raise a Builder"></a><a class="ndot" href="#operation" title="The Operation Series"></a><a class="ndot" href="#kyber" title="Kyber"></a><a class="ndot" href="#chalk" title="Chalkboard"></a><a class="ndot" href="#fry" title="Fry City"></a><a class="ndot" href="#shop" title="3D — the print shop"></a><a class="ndot" href="#pic" title="Picture Machines"></a><a class="ndot" href="#cubo" title="CUBO"></a><a class="ndot" href="#find" title="Where to find it"></a></nav>
+<nav class="nav"><a class="ndot" href="#little" title="Little One"></a><a class="ndot" href="#aibook" title="The AI Book Blueprint"></a><a class="ndot" href="#guide" title="Guide to 3D Printing"></a><a class="ndot" href="#money" title="Making Money with 3D Printing"></a><a class="ndot" href="#rab" title="Raise a Builder"></a><a class="ndot" href="#operation" title="The Operation Series"></a><a class="ndot" href="#kyber" title="Kyber"></a><a class="ndot" href="#chalk" title="Chalkboard"></a><a class="ndot" href="#broom" title="Broom"></a><a class="ndot" href="#fry" title="Fry City"></a><a class="ndot" href="#shop" title="3D — the print shop"></a><a class="ndot" href="#pic" title="Picture Machines"></a><a class="ndot" href="#cubo" title="CUBO"></a><a class="ndot" href="#find" title="Where to find it"></a></nav>
 
 <main>
   <section class="hero" id="top" data-bg="#0E0E12" data-ink="#F4F1EA" data-dim="#8B8B98" data-accent="#C9A227" data-accent2="#5FD0E6" data-fdisp="Fraunces" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="dots" data-shape="soft" data-hero="1"><div class="wrap">
@@ -242,6 +247,19 @@ body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-r
       <div class="sig" data-wid="chalk"></div>
     </div>
     <div class="wart reveal"><div class="frame"><img src="i-chalkboard.png" alt="Chalkboard" loading="lazy"></div></div>
+  </div>
+</section>
+
+<section class="world" id="broom" data-bg="#ECE0C8" data-ink="#17140F" data-dim="#6B6152" data-accent="#C04A32" data-accent2="#C04A32" data-fdisp="&#x27;Alfa Slab One&#x27;" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="dots" data-shape="soft">
+  <div class="wrap wgrid">
+    <div class="wtext reveal">
+      <p class="kick">MENU BAR · MAC &amp; LINUX · FREE</p>
+      <h2>Broom</h2>
+      <p class="wdesc">A little sweeper that finds the giant files and forgotten downloads quietly eating your disk. It never deletes anything — everything goes to the Trash, so nothing is ever really gone. And it refuses to lie to you about your memory.</p>
+      <div class="wrow"><a class="cta" href="https://broom.peterstam.eu" target="_blank" rel="noopener">Sweep up <span aria-hidden="true">&#8599;</span></a><span class="mood m-tag" data-mood="carved, not glossy">carved, not glossy</span></div>
+      <div class="sig" data-wid="broom"></div>
+    </div>
+    <div class="wart reveal"><div class="frame"><img src="i-broom.jpg" alt="Broom" loading="lazy"></div></div>
   </div>
 </section><section class="world" id="fry" data-bg="#1A0E08" data-ink="#FBEFD8" data-dim="#C09A6A" data-accent="#E4553F" data-accent2="#FFC93C" data-fdisp="Cinzel" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="none" data-shape="soft">
   <div class="wrap wgrid">
