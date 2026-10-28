@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Goo Lab - soft / lab</title>
+<style>:root{--ink:#111;--mute:#8b8b86;--paper:#f5f4f0;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:"Helvetica Neue",Arial,sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.mono{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+canvas{touch-action:none}
+#title{position:fixed;left:16px;top:12px;pointer-events:none;z-index:3}
+#title h1{margin:2px 0 0;font:900 30px/0.9 "Arial Black","Helvetica Neue",Arial,sans-serif;letter-spacing:-.02em}
+#title .mono{color:var(--mute)}
+a.back{position:fixed;left:16px;bottom:18px;z-index:5;font:600 12px/1 "Helvetica Neue",Arial,sans-serif;color:#111;text-decoration:none;background:rgba(255,255,255,.88);padding:9px 12px;border-radius:999px;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+#bar,#chips{position:fixed;left:0;right:0;margin:0 auto;width:fit-content;display:flex;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.9);box-shadow:0 2px 16px rgba(0,0,0,.12);backdrop-filter:blur(8px);max-width:calc(100vw - 16px);flex-wrap:wrap;justify-content:center;z-index:4}
+#bar{bottom:14px} #chips{top:14px}
+.btn{font:600 12px/1 "Helvetica Neue",Arial,sans-serif;border:0;border-radius:999px;background:transparent;color:#222;cursor:pointer;padding:9px 13px;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation;white-space:nowrap}
+.btn::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--dot,#999)}
+.btn.on{background:#111;color:#fff}
+.btn:active{transform:scale(.96)}
+#stats{position:fixed;top:16px;right:16px;color:var(--mute);text-align:right;pointer-events:none;line-height:1.6;z-index:3}
+#stats b{color:#222;font-weight:600}
+#hint{position:fixed;left:16px;top:62px;max-width:min(280px,46vw);color:#555;font-size:12px;line-height:1.4;pointer-events:none;z-index:3}
+@media (max-width:640px){#title h1{font-size:22px}.btn{padding:8px 9px;font-size:11px}#chips{top:auto;bottom:100px}#hint{display:none}a.back{bottom:auto;top:12px;left:auto;right:12px}#stats{top:48px}}
+
+canvas{position:fixed;inset:0;width:100vw;height:100vh;cursor:grab}
+#hint{top:96px}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="title"><div class="mono">soft / lab - toy no. 02</div><h1>GOO<br>LAB</h1></div>
+<div id="hint" class="mono" style="text-transform:none;letter-spacing:0;font-family:inherit">Drag a blob and fling it. Tap empty space to add goo. Blobs merge when they touch. Turn on Split, then tap a blob to cut it in two.</div>
+<div id="stats" class="mono"><b id="sN">0</b> blobs &middot; <b id="sF">--</b> fps</div>
+<div id="chips"><button class="btn on" data-pal="candy" style="--dot:#ff5fa2">Candy</button><button class="btn" data-pal="ocean" style="--dot:#2fb4ff">Ocean</button><button class="btn" data-pal="slime" style="--dot:#7be34a">Slime</button><button class="btn" data-pal="lava" style="--dot:#ff6a2f">Lava</button></div>
+<div id="bar"><button class="btn" id="bAdd" style="--dot:#3fb34a">Add</button><button class="btn" id="bSplit" style="--dot:#111">Split</button><button class="btn on" id="bGrav" style="--dot:#8f7bff">Gravity</button><button class="btn" id="bRun" style="--dot:#4fb3ff">Runny</button><button class="btn" id="bShake" style="--dot:#ffd23c">Shake</button><button class="btn" id="bClear" style="--dot:#e8554a">Clear</button></div>
+<a class="back" href="index.html">&larr; toys</a>
+<script>
+(() => {
+'use strict';
+const errors = []; window.__errors = errors; window.addEventListener('error', e => errors.push(String(e.message)));
+const $ = id => document.getElementById(id), canvas = $('c');
+const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+if (!gl) { document.body.insertAdjacentHTML('beforeend', '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center">This toy needs WebGL, which this browser does not offer.</div>'); return; }
+const MAXB = 40;
+const PAL = { candy: [[1, .37, .64], [1, .64, .3], [1, .88, .29], [.42, .94, .54], [.31, .85, 1], [.56, .48, 1]], ocean: [[.18, .7, 1], [.1, .5, .9], [.2, .85, .85], [.4, .6, 1], [.1, .35, .7], [.55, .9, 1]],
+  slime: [[.48, .89, .29], [.3, .8, .35], [.7, .95, .3], [.2, .7, .5], [.55, 1, .55], [.85, 1, .4]], lava: [[1, .42, .18], [1, .25, .12], [1, .7, .15], [.9, .15, .15], [1, .55, .3], [1, .85, .35]] };
+let pal = 'candy', ci = 0;
+// ---------------------------------------------------------------------------------------------- shader (all blobs are one glowing field)
+const VS = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
+const FS = `precision highp float;
+uniform vec2 uRes; uniform vec3 uB[${MAXB}]; uniform vec3 uC[${MAXB}]; uniform float uN; uniform float uDpr;
+float field(vec2 p, out vec3 col) { float f = 0.0; col = vec3(0.0);
+  for (int i = 0; i < ${MAXB}; i++) { if (float(i) >= uN) break; vec2 d = p - uB[i].xy; float w = (uB[i].z * uB[i].z) / (dot(d, d) + 1.0); f += w; col += uC[i] * w; }
+  col /= max(f, 1e-4); return f; }
+float height(vec2 p) { vec3 c; float f = field(p, c); return smoothstep(0.9, 3.2, f) * 26.0 * uDpr; }
+void main() {
+  vec2 p = gl_FragCoord.xy; vec3 col; float f = field(p, col);
+  vec2 gq = abs(fract(p / (48.0 * uDpr)) - 0.5);
+  float line = step(0.494, max(gq.x, gq.y)) * 0.03;
+  vec3 bg = vec3(0.961, 0.957, 0.941) - line;
+  vec3 c2; float fs = field(p - vec2(-12.0, 16.0) * uDpr, c2); bg *= 1.0 - 0.17 * smoothstep(0.85, 1.6, fs);       // soft shadow
+  float a = smoothstep(0.97, 1.03, f);
+  float e = 2.0 * uDpr; float h0 = height(p), hx = height(p + vec2(e, 0.0)), hy = height(p + vec2(0.0, e));
+  vec3 n = normalize(vec3(-(hx - h0) / e * 1.6, -(hy - h0) / e * 1.6, 1.0));
+  vec3 L = normalize(vec3(-0.45, 0.6, 0.75)), V = vec3(0.0, 0.0, 1.0);
+  float diff = clamp(dot(n, L), 0.0, 1.0); vec3 H = normalize(L + V); float spec = pow(clamp(dot(n, H), 0.0, 1.0), 60.0);
+  float rim = pow(1.0 - clamp(n.z, 0.0, 1.0), 2.0);
+  vec3 body = col * (0.62 + 0.55 * diff) + vec3(1.0) * spec * 0.85 + col * rim * 0.35;
+  body = mix(body, vec3(1.0), 0.08 * smoothstep(1.0, 3.0, f));                                                       // thick centre looks glassier
+  gl_FragColor = vec4(mix(bg, body, a), 1.0);
+}`;
+function sh(t, s) { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) errors.push('shader: ' + gl.getShaderInfoLog(o)); return o; }
+const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) errors.push('link: ' + gl.getProgramInfoLog(prog));
+gl.useProgram(prog); const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+const U = n => gl.getUniformLocation(prog, n); const uRes = U('uRes'), uB = U('uB[0]'), uC = U('uC[0]'), uN = U('uN'), uDpr = U('uDpr');
+// ---------------------------------------------------------------------------------------------- the blobs
+let W = 0, H = 0, dpr = 1; const blobs = []; const st = { gravity: true, runny: false, split: false, shake: 0 };
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); gl.viewport(0, 0, canvas.width, canvas.height); }
+addEventListener('resize', resize); resize();
+function add(x, y, r, col) { if (blobs.length >= MAXB) blobs.shift(); const c = col || PAL[pal][ci++ % 6]; const b = { x, y, vx: (Math.random() - .5) * 60, vy: 0, r: r || 26 + Math.random() * 20, c }; blobs.push(b); return b; }
+function seed() { blobs.length = 0; for (let i = 0; i < 9; i++) add(W * (0.2 + Math.random() * 0.6), H * (0.15 + Math.random() * 0.5)); }
+seed();
+let grab = null, gx = 0, gy = 0, down = null;
+function pick(x, y) { let best = null, bd = 1e9; for (const b of blobs) { const d = Math.hypot(b.x - x, b.y - y); if (d < b.r * 1.5 && d < bd) { bd = d; best = b; } } return best; }
+canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); const b = pick(e.clientX, e.clientY); down = { x: e.clientX, y: e.clientY, t: performance.now(), b };
+  if (b && !st.split) { grab = b; gx = e.clientX; gy = e.clientY; } });
+canvas.addEventListener('pointermove', e => { if (grab) { gx = e.clientX; gy = e.clientY; } });
+function release(e) { const d = down; down = null; const wasGrab = grab; grab = null; if (!d) return; const moved = Math.hypot(e.clientX - d.x, e.clientY - d.y);
+  if (moved < 8 && performance.now() - d.t < 400) { if (d.b && st.split) splitBlob(d.b); else if (!d.b) add(e.clientX, e.clientY, 24 + Math.random() * 22); } }
+canvas.addEventListener('pointerup', release); canvas.addEventListener('pointercancel', () => { grab = null; down = null; });
+function splitBlob(b) { if (b.r < 14) return; const r2 = b.r / Math.SQRT2, a = Math.random() * 6.283; const c2 = PAL[pal][ci++ % 6]; b.r = r2; const n = add(b.x + Math.cos(a) * r2, b.y + Math.sin(a) * r2, r2, c2); b.x -= Math.cos(a) * r2 * .5; b.y -= Math.sin(a) * r2 * .5; n.vx = Math.cos(a) * 260; n.vy = Math.sin(a) * 260; b.vx = -n.vx; b.vy = -n.vy; }
+function step(dt) {
+  const gr = st.gravity ? 1300 : 0, damp = st.runny ? 0.9993 : 0.9965, coh = st.runny ? 0.35 : 1.0;
+  for (let i = 0; i < blobs.length; i++) { const a = blobs[i];
+    for (let j = i + 1; j < blobs.length; j++) { const b = blobs[j]; let dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01; const rr = a.r + b.r; dx /= d; dy /= d;
+      let f = 0; if (d < rr * 0.78) f = -(rr * 0.78 - d) * 70;                       // soft core: blobs do not pile into one point
+      else if (d < rr * 1.9) f = (d - rr * 0.78) * 4.2 * coh;                        // goo: pulled together when close
+      const ma = a.r * a.r, mb = b.r * b.r, tot = ma + mb; a.vx += dx * f * (mb / tot) * dt * 6; a.vy += dy * f * (mb / tot) * dt * 6; b.vx -= dx * f * (ma / tot) * dt * 6; b.vy -= dy * f * (ma / tot) * dt * 6;
+      if (d < rr * 0.78) { const rvx = b.vx - a.vx, rvy = b.vy - a.vy; a.vx += rvx * 0.01; a.vy += rvy * 0.01; b.vx -= rvx * 0.01; b.vy -= rvy * 0.01; } }
+    a.vy += gr * dt; if (st.shake > 0) { a.vx += (Math.random() - .5) * 2600 * dt; a.vy += (Math.random() - .6) * 2600 * dt; }
+    if (a === grab) { a.vx += (gx - a.x) * 38 * dt - a.vx * 9 * dt; a.vy += (gy - a.y) * 38 * dt - a.vy * 9 * dt; }
+    a.vx *= damp; a.vy *= damp; const sp = Math.hypot(a.vx, a.vy); if (sp > 2200) { a.vx *= 2200 / sp; a.vy *= 2200 / sp; }
+    a.x += a.vx * dt; a.y += a.vy * dt; const m = a.r * 0.55;
+    if (a.x < m) { a.x = m; a.vx = Math.abs(a.vx) * 0.45; } if (a.x > W - m) { a.x = W - m; a.vx = -Math.abs(a.vx) * 0.45; }
+    if (a.y < m) { a.y = m; a.vy = Math.abs(a.vy) * 0.45; } if (a.y > H - 74 - m) { a.y = H - 74 - m; a.vy = -Math.abs(a.vy) * 0.3; a.vx *= 0.995; } }
+  if (st.shake > 0) st.shake -= dt;
+}
+// ---------------------------------------------------------------------------------------------- buttons
+document.querySelectorAll('#chips .btn').forEach(b => b.addEventListener('click', () => { pal = b.dataset.pal; document.querySelectorAll('#chips .btn').forEach(x => x.classList.toggle('on', x === b)); blobs.forEach((o, i) => { o.c = PAL[pal][i % 6]; }); }));
+$('bAdd').onclick = () => add(W * (0.2 + Math.random() * 0.6), 60, 26 + Math.random() * 22);
+$('bSplit').onclick = e => { st.split = !st.split; e.currentTarget.classList.toggle('on', st.split); };
+$('bGrav').onclick = e => { st.gravity = !st.gravity; e.currentTarget.classList.toggle('on', st.gravity); };
+$('bRun').onclick = e => { st.runny = !st.runny; e.currentTarget.classList.toggle('on', st.runny); };
+$('bShake').onclick = () => { st.shake = 0.9; };
+$('bClear').onclick = () => { blobs.length = 0; add(W / 2, H / 2, 40); };
+// ---------------------------------------------------------------------------------------------- loop
+const pb = new Float32Array(MAXB * 3), pc = new Float32Array(MAXB * 3); let last = performance.now(), ema = 1 / 60;
+function frame(now) { requestAnimationFrame(frame); const raw = Math.min((now - last) / 1000, 0.1); last = now; ema = ema * 0.93 + raw * 0.07; const dt = Math.min(raw, 1 / 30); const sub = Math.ceil(dt / (1 / 120)); for (let i = 0; i < sub; i++) step(dt / sub);
+  blobs.forEach((b, i) => { pb[i * 3] = b.x * dpr; pb[i * 3 + 1] = (H - b.y) * dpr; pb[i * 3 + 2] = b.r * dpr; pc[i * 3] = b.c[0]; pc[i * 3 + 1] = b.c[1]; pc[i * 3 + 2] = b.c[2]; });
+  gl.uniform2f(uRes, canvas.width, canvas.height); gl.uniform3fv(uB, pb); gl.uniform3fv(uC, pc); gl.uniform1f(uN, blobs.length); gl.uniform1f(uDpr, dpr); gl.drawArrays(gl.TRIANGLES, 0, 3);
+  $('sN').textContent = blobs.length; $('sF').textContent = Math.round(1 / ema); }
+requestAnimationFrame(frame);
+window.__goo = { count: () => blobs.length, blobs: () => blobs.map(b => ({ x: b.x, y: b.y, r: b.r, speed: Math.hypot(b.vx, b.vy) })), st, size: () => [W, H], pick: (x, y) => !!pick(x, y) };
+})();
+</script></body></html>

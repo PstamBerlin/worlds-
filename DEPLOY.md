@@ -33,6 +33,8 @@ Every file is now under GitHub's 25 MB web-upload limit, so no special tools nee
 - Open https://worlds.peterstam.eu  — done.
 
 ## Notes
+- toys/ is a FOLDER (the four browser toys + their index page). Deploy it with git
+  push from ~/repos/worlds-; the web uploader would flatten it and break the links.
 - To change the front door to the scrolling version: copy site.html over index.html.
 - operation-series.zip = 93 dossier PDFs (24 MB). picture-machines.zip = the Python
   tools + guides. picture-machine.html is the in-browser app; it needs no server.

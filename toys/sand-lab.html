@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Sand Lab - soft / lab</title>
+<style>:root{--ink:#111;--mute:#8b8b86;--paper:#f5f4f0;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:"Helvetica Neue",Arial,sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.mono{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+canvas{touch-action:none}
+#title{position:fixed;left:16px;top:12px;pointer-events:none;z-index:3}
+#title h1{margin:2px 0 0;font:900 30px/0.9 "Arial Black","Helvetica Neue",Arial,sans-serif;letter-spacing:-.02em}
+#title .mono{color:var(--mute)}
+a.back{position:fixed;left:16px;bottom:18px;z-index:5;font:600 12px/1 "Helvetica Neue",Arial,sans-serif;color:#111;text-decoration:none;background:rgba(255,255,255,.88);padding:9px 12px;border-radius:999px;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+#bar,#chips{position:fixed;left:0;right:0;margin:0 auto;width:fit-content;display:flex;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.9);box-shadow:0 2px 16px rgba(0,0,0,.12);backdrop-filter:blur(8px);max-width:calc(100vw - 16px);flex-wrap:wrap;justify-content:center;z-index:4}
+#bar{bottom:14px} #chips{top:14px}
+.btn{font:600 12px/1 "Helvetica Neue",Arial,sans-serif;border:0;border-radius:999px;background:transparent;color:#222;cursor:pointer;padding:9px 13px;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation;white-space:nowrap}
+.btn::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--dot,#999)}
+.btn.on{background:#111;color:#fff}
+.btn:active{transform:scale(.96)}
+#stats{position:fixed;top:16px;right:16px;color:var(--mute);text-align:right;pointer-events:none;line-height:1.6;z-index:3}
+#stats b{color:#222;font-weight:600}
+#hint{position:fixed;left:16px;top:62px;max-width:min(280px,46vw);color:#555;font-size:12px;line-height:1.4;pointer-events:none;z-index:3}
+@media (max-width:640px){#title h1{font-size:22px}.btn{padding:8px 9px;font-size:11px}#chips{top:auto;bottom:100px}#hint{display:none}a.back{bottom:auto;top:12px;left:auto;right:12px}#stats{top:48px}}
+
+canvas{position:fixed;left:0;top:0;width:100vw;height:100vh;image-rendering:pixelated;cursor:crosshair}
+#hint{top:98px}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="title"><div class="mono">soft / lab - toy no. 04</div><h1>SAND<br>LAB</h1></div>
+<div id="hint" class="mono" style="text-transform:none;letter-spacing:0;font-family:inherit">Pick a material and draw. Sand piles up, water flows, oil floats on water, fire burns oil and goes out in water.</div>
+<div id="stats" class="mono"><b id="sP">0</b> particles &middot; <b id="sF">--</b> fps</div>
+<div id="chips"><button class="btn on" data-m="1" style="--dot:#e8c46a">Sand</button><button class="btn" data-m="2" style="--dot:#3aa0ff">Water</button><button class="btn" data-m="3" style="--dot:#6b6b70">Stone</button><button class="btn" data-m="4" style="--dot:#7a4a1e">Oil</button><button class="btn" data-m="5" style="--dot:#ff6a2f">Fire</button><button class="btn" data-m="0" style="--dot:#fff">Eraser</button></div>
+<div id="bar"><button class="btn" data-b="3" style="--dot:#bbb">Small</button><button class="btn on" data-b="6" style="--dot:#999">Medium</button><button class="btn" data-b="12" style="--dot:#666">Big</button><button class="btn" id="bPause" style="--dot:#8f7bff">Pause</button><button class="btn" id="bRain" style="--dot:#4fb3ff">Rain</button><button class="btn" id="bClear" style="--dot:#e8554a">Clear</button></div>
+<a class="back" href="index.html">&larr; toys</a>
+<script>
+(() => {
+'use strict';
+const errors = []; window.__errors = errors; window.addEventListener('error', e => errors.push(String(e.message)));
+const $ = id => document.getElementById(id), canvas = $('c'), ctx = canvas.getContext('2d');
+const E = 0, SAND = 1, WATER = 2, STONE = 3, OIL = 4, FIRE = 5;
+let GW = 0, GH = 0, grid, aux, img, data32, scale = 4;
+const COL = { [SAND]: [232, 196, 106], [WATER]: [58, 160, 255], [STONE]: [107, 107, 112], [OIL]: [122, 74, 30], [FIRE]: [255, 106, 47] };
+const BG = [245, 244, 240];
+function setup() { const dpr = 1; const w = innerWidth, h = innerHeight; scale = Math.max(3, Math.round(Math.min(w, h) / 150)); const nw = Math.floor(w / scale), nh = Math.floor(h / scale);
+  const old = grid, oW = GW, oH = GH; GW = nw; GH = nh; grid = new Uint8Array(GW * GH); aux = new Uint8Array(GW * GH);
+  if (old) for (let y = 0; y < Math.min(oH, GH); y++) for (let x = 0; x < Math.min(oW, GW); x++) grid[y * GW + x] = old[y * oW + x];
+  canvas.width = GW; canvas.height = GH; img = ctx.createImageData(GW, GH); data32 = new Uint32Array(img.data.buffer); }
+setup(); addEventListener('resize', setup);
+let mat = SAND, brush = 6, paused = false, rain = false, count = 0;
+const rnd = Math.random;
+function swap(a, b) { const t = grid[a]; grid[a] = grid[b]; grid[b] = t; const u = aux[a]; aux[a] = aux[b]; aux[b] = u; }
+const dens = m => m === SAND ? 3 : m === WATER ? 2 : m === OIL ? 1 : 0;
+function stepOnce() {
+  const dirFirst = rnd() < 0.5;
+  for (let y = GH - 2; y >= 0; y--) {
+    for (let k = 0; k < GW; k++) { const x = dirFirst ? k : GW - 1 - k; const i = y * GW + x, m = grid[i]; if (m === E || m === STONE) continue; const below = i + GW;
+      if (m === FIRE) {
+        aux[i]++; if (aux[i] > 22 + (i % 17)) { grid[i] = E; aux[i] = 0; continue; }
+        const nb = [i - 1, i + 1, i - GW, i + GW]; for (const n of nb) { if (n < 0 || n >= grid.length) continue; if (grid[n] === OIL && rnd() < 0.35) { grid[n] = FIRE; aux[n] = 0; } else if (grid[n] === WATER) { grid[i] = E; aux[i] = 0; break; } }
+        if (grid[i] === FIRE && rnd() < 0.4) { const up = i - GW; if (y > 0 && grid[up] === E) { swap(i, up); } else { const dx = rnd() < .5 ? -1 : 1; if (x + dx >= 0 && x + dx < GW && grid[i + dx] === E) swap(i, i + dx); } }
+        continue; }
+      if (m === SAND) {
+        if (dens(grid[below]) < 3 && grid[below] !== STONE && grid[below] !== FIRE) swap(i, below);
+        else { const dx = rnd() < 0.5 ? -1 : 1; const a = i + GW + dx; if (x + dx >= 0 && x + dx < GW && dens(grid[a]) < 3 && grid[a] !== STONE && grid[a] !== FIRE && dens(grid[i + dx]) < 3 && grid[i + dx] !== STONE) swap(i, a); } continue; }
+      // liquids: water (2) and oil (1)
+      const d = dens(m);
+      if (grid[below] === E || (dens(grid[below]) < d && grid[below] !== FIRE && grid[below] !== STONE)) { swap(i, below); continue; }
+      const dx = rnd() < 0.5 ? -1 : 1;
+      if (x + dx >= 0 && x + dx < GW && grid[below + dx] === E) { swap(i, below + dx); continue; }
+      let moved = false; for (let s = 1; s <= 3 && !moved; s++) { const nx = x + dx * s; if (nx < 0 || nx >= GW) break; const t = i + dx * s; if (grid[t] === E) { if (s === 3 || grid[t + dx] !== E || nx + dx < 0 || nx + dx >= GW) { swap(i, t); moved = true; } } else if (grid[t] !== E && !(dens(grid[t]) < d && grid[t] !== STONE && grid[t] !== FIRE)) break; }
+      if (!moved && grid[i + dx] === E) swap(i, i + dx);
+    }
+  }
+  if (rain) for (let k = 0; k < 3; k++) { const x = Math.floor(rnd() * GW); if (grid[x] === E) { grid[x] = mat === E ? SAND : mat; } }
+}
+function paint(x0, y0, r) { if (mat === FIRE) r = Math.max(2, Math.floor(r * 0.6)); for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) { if (x * x + y * y > r * r) continue; const gx = x0 + x, gy = y0 + y; if (gx < 0 || gx >= GW || gy < 0 || gy >= GH) continue; const i = gy * GW + gx;
+  if (mat === E) { grid[i] = E; aux[i] = 0; continue; } if (grid[i] !== E) continue; if ((mat === SAND || mat === WATER || mat === OIL) && rnd() > 0.55) continue; grid[i] = mat; aux[i] = 0; } }
+let drawing = false, lx = 0, ly = 0;
+function cell(e) { return [Math.floor(e.clientX / scale), Math.floor(e.clientY / scale)]; }
+canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); drawing = true; [lx, ly] = cell(e); paint(lx, ly, brush); });
+canvas.addEventListener('pointermove', e => { if (!drawing) return; const [x, y] = cell(e); const n = Math.max(Math.abs(x - lx), Math.abs(y - ly), 1); for (let k = 1; k <= n; k++) paint(Math.round(lx + (x - lx) * k / n), Math.round(ly + (y - ly) * k / n), brush); lx = x; ly = y; });
+const stop = () => { drawing = false; }; canvas.addEventListener('pointerup', stop); canvas.addEventListener('pointercancel', stop);
+document.querySelectorAll('#chips .btn').forEach(b => b.onclick = () => { mat = +b.dataset.m; document.querySelectorAll('#chips .btn').forEach(x => x.classList.toggle('on', x === b)); });
+document.querySelectorAll('#bar [data-b]').forEach(b => b.onclick = () => { brush = +b.dataset.b; document.querySelectorAll('#bar [data-b]').forEach(x => x.classList.toggle('on', x === b)); });
+$('bPause').onclick = e => { paused = !paused; e.currentTarget.classList.toggle('on', paused); e.currentTarget.textContent = paused ? 'Play' : 'Pause'; };
+$('bRain').onclick = e => { rain = !rain; e.currentTarget.classList.toggle('on', rain); };
+$('bClear').onclick = () => { grid.fill(0); aux.fill(0); };
+const px = m => { const c = COL[m] || BG; return (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0]; };
+const PX = { [E]: px(E), [SAND]: px(SAND), [WATER]: px(WATER), [STONE]: px(STONE), [OIL]: px(OIL), [FIRE]: px(FIRE) }; const bgPx = (255 << 24) | (BG[2] << 16) | (BG[1] << 8) | BG[0];
+function render() { count = 0; for (let i = 0; i < grid.length; i++) { const m = grid[i]; if (m === E) { data32[i] = bgPx; continue; } count++; let p = PX[m];
+    if (m === FIRE) { const t = aux[i] / 24; const r = 255, g = Math.round(210 - 150 * t), b = Math.round(60 - 40 * t); p = (255 << 24) | (b << 16) | (g << 8) | r; } else if (m === SAND || m === STONE) { const n = ((i * 2654435761) >>> 28) - 8; const c = COL[m]; p = (255 << 24) | (clamp(c[2] + n * 2) << 16) | (clamp(c[1] + n * 2) << 8) | clamp(c[0] + n * 2); }
+    data32[i] = p; }
+  ctx.putImageData(img, 0, 0); }
+const clamp = v => Math.max(0, Math.min(255, v));
+let last = performance.now(), ema = 1 / 60;
+function frame(now) { requestAnimationFrame(frame); const raw = Math.min((now - last) / 1000, 0.1); last = now; ema = ema * 0.93 + raw * 0.07; if (!paused) { stepOnce(); stepOnce(); } render(); $('sP').textContent = count; $('sF').textContent = Math.round(1 / ema); }
+requestAnimationFrame(frame);
+window.__sand = { size: () => [GW, GH], count: () => count, cell: (x, y) => grid[y * GW + x], step: n => { for (let i = 0; i < n; i++) stepOnce(); }, set: (x, y, m) => { grid[y * GW + x] = m; aux[y * GW + x] = 0; }, tally: () => { const t = [0, 0, 0, 0, 0, 0]; for (let i = 0; i < grid.length; i++) t[grid[i]]++; return t; }, scale: () => scale };
+})();
+</script></body></html>

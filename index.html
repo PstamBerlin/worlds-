@@ -2,12 +2,12 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Peter Stam — everything I have made</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%230E0E12%22%2F%3E%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2226%22%20fill%3D%22none%22%20stroke%3D%22%23C9A227%22%20stroke-width%3D%225%22%2F%3E%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2224%22%20r%3D%227%22%20fill%3D%22%23C9A227%22%2F%3E%20%3Ccircle%20cx%3D%2272%22%20cy%3D%2262%22%20r%3D%226%22%20fill%3D%22%235FD0E6%22%2F%3E%20%3Ccircle%20cx%3D%2228%22%20cy%3D%2262%22%20r%3D%226%22%20fill%3D%22%235FD0E6%22%2F%3E%20%3C%2Fsvg%3E">
-<meta name="description" content="Everything Peter Stam (11) has made — books, a browser, an invented city, a print shop — each in its own design world.">
+<meta name="description" content="Everything Peter Stam (11) has made — books, a browser, an invented city, a print shop, screen protectors, browser toys — each in its own design world.">
 <meta property="og:type" content="website"><meta property="og:url" content="https://worlds.peterstam.eu/">
 <meta property="og:title" content="Peter Stam — everything I have made"><meta property="og:image" content="https://worlds.peterstam.eu/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,600&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=Sora:wght@600;800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Cinzel:wght@600;700&family=Fredoka:wght@500;600;700&family=Poppins:wght@600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,600&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=Sora:wght@600;800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Cinzel:wght@600;700&family=Fredoka:wght@500;600;700&family=Poppins:wght@600;700&family=JetBrains+Mono:wght@400;700&family=Archivo+Black&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0E0E12;--ink:#F4F1EA;--dim:#8B8B98;--accent:#C9A227;--accent2:#5FD0E6;
@@ -72,6 +72,10 @@ body[data-shape="sharp"] .frame.noimg::after{font-size:15px;line-height:1.6}
    its normal size, which the global "sharp" shape would have shrunk. */
 #broom .frame img,#broom .cta,#broom .sig .line,#broom .sig .lbar{border-radius:0}
 #broom .frame img{box-shadow:14px 14px 0 rgba(23,20,15,.18),0 30px 72px rgba(23,20,15,.22)}
+/* Toys: Archivo Black has one weight, so no faux-bold; the photo of the screen-protector stand
+   is a real photo, so it keeps the room's own light instead of a heavy dark drop shadow */
+#toys h2{font-weight:400}
+#screen .frame img{box-shadow:0 18px 48px rgba(124,58,237,.22)}
 /* reveal on enter */
 .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
@@ -151,11 +155,11 @@ body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-r
 <div class="particles" id="particles"></div>
 <div class="prog" id="prog"></div>
 <header class="bar"><span class="brand">Peter Stam</span><span class="now" id="now">Everything I have made</span></header>
-<nav class="nav"><a class="ndot" href="#little" title="Little One"></a><a class="ndot" href="#aibook" title="The AI Book Blueprint"></a><a class="ndot" href="#guide" title="Guide to 3D Printing"></a><a class="ndot" href="#money" title="Making Money with 3D Printing"></a><a class="ndot" href="#rab" title="Raise a Builder"></a><a class="ndot" href="#operation" title="The Operation Series"></a><a class="ndot" href="#kyber" title="Kyber"></a><a class="ndot" href="#chalk" title="Chalkboard"></a><a class="ndot" href="#broom" title="Broom"></a><a class="ndot" href="#fry" title="Fry City"></a><a class="ndot" href="#shop" title="3D — the print shop"></a><a class="ndot" href="#pic" title="Picture Machines"></a><a class="ndot" href="#cubo" title="CUBO"></a><a class="ndot" href="#find" title="Where to find it"></a></nav>
+<nav class="nav"><a class="ndot" href="#little" title="Little One"></a><a class="ndot" href="#aibook" title="The AI Book Blueprint"></a><a class="ndot" href="#guide" title="Guide to 3D Printing"></a><a class="ndot" href="#money" title="Making Money with 3D Printing"></a><a class="ndot" href="#rab" title="Raise a Builder"></a><a class="ndot" href="#operation" title="The Operation Series"></a><a class="ndot" href="#kyber" title="Kyber"></a><a class="ndot" href="#chalk" title="Chalkboard"></a><a class="ndot" href="#broom" title="Broom"></a><a class="ndot" href="#fry" title="Fry City"></a><a class="ndot" href="#shop" title="3D — the print shop"></a><a class="ndot" href="#screen" title="Screen Protectors"></a><a class="ndot" href="#pic" title="Picture Machines"></a><a class="ndot" href="#cubo" title="CUBO"></a><a class="ndot" href="#toys" title="Toys"></a><a class="ndot" href="#find" title="Where to find it"></a></nav>
 
 <main>
   <section class="hero" id="top" data-bg="#0E0E12" data-ink="#F4F1EA" data-dim="#8B8B98" data-accent="#C9A227" data-accent2="#5FD0E6" data-fdisp="Fraunces" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="dots" data-shape="soft" data-hero="1"><div class="wrap">
-    <p class="eyebrow">A catalogue · 12 projects</p>
+    <p class="eyebrow">A catalogue · 15 projects</p>
     <h1>Everything<br>I have <em>made</em>.</h1>
     <p class="lede">I am 11, I live in Berlin, and I build things and then finish them. Scroll down — every project takes over the whole page with its own look.</p>
     <p class="scrollcue">Scroll &#8595;</p>
@@ -283,6 +287,17 @@ body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-r
     </div>
     <div class="wart reveal"><div class="frame"><img src="i-3dkit.jpg" alt="3D — the print shop" loading="lazy"></div></div>
   </div>
+</section><section class="world" id="screen" data-bg="#F9EFF4" data-ink="#141120" data-dim="#5E5480" data-accent="#7C3AED" data-accent2="#9F67FF" data-fdisp="ui-rounded,&#x27;SF Pro Rounded&#x27;,&#x27;Arial Rounded MT Bold&#x27;,Manrope" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="dots" data-shape="round">
+  <div class="wrap wgrid">
+    <div class="wtext reveal">
+      <p class="kick">MADE &amp; SOLD · CUT TO SIZE · BERLIN</p>
+      <h2>Screen Protectors</h2>
+      <p class="wdesc">Film for every phone, cut to fit while you wait — even phones no shop has film for. A real cutting machine on a market table, prices from €3, and signs that say what the film can&#x27;t do. The site has the next dates, a phone finder with 1,786 model numbers, and an invite-me form.</p>
+      <div class="wrow"><a class="cta" href="https://screen.peterstam.eu" target="_blank" rel="noopener">See prices &amp; dates <span aria-hidden="true">&#8599;</span></a><span class="mood m-tag" data-mood="cut while you wait">cut while you wait</span></div>
+      <div class="sig" data-wid="screen"></div>
+    </div>
+    <div class="wart reveal"><div class="frame"><img src="i-screen.jpg" alt="Screen Protectors — the stand" loading="lazy"></div></div>
+  </div>
 </section><section class="world" id="pic" data-bg="#161310" data-ink="#F4EEE4" data-dim="#A79A88" data-accent="#D85A30" data-accent2="#12857E" data-fdisp="Sora" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="dots" data-shape="soft">
   <div class="wrap wgrid">
     <div class="wtext reveal">
@@ -306,10 +321,22 @@ body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-r
     <div class="wart reveal"><div class="frame"><img src="i-cubo.jpg" alt="CUBO" loading="lazy"></div></div>
   </div>
 </section>
+<section class="world" id="toys" data-bg="#F5F4F0" data-ink="#111111" data-dim="#8B8B86" data-accent="#111111" data-accent2="#FF5FA2" data-fdisp="&#x27;Archivo Black&#x27;" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="grid" data-shape="round">
+  <div class="wrap wgrid">
+    <div class="wtext reveal">
+      <p class="kick">BROWSER TOYS · FOUR SO FAR · FREE</p>
+      <h2>Toys</h2>
+      <p class="wdesc">Little things to poke at. Goo Lab: blobs of slime that merge when they touch — drag, fling, split, shake. Jelly Garden: fruit jellies that fall, pile up and squash. Plinko draws a bell curve out of falling balls. Sand Lab: sand, water, oil and fire. No accounts, no tracking.</p>
+      <div class="wrow"><a class="cta" href="toys/" target="_blank" rel="noopener">Play <span aria-hidden="true">&#8599;</span></a><span class="mood m-tag" data-mood="poke it">poke it</span></div>
+      <div class="sig" data-wid="toys"></div>
+    </div>
+    <div class="wart reveal"><div class="frame"><img src="i-toys.jpg" alt="Toys — Goo Lab" loading="lazy"></div></div>
+  </div>
+</section>
   <section class="outro" id="find" data-bg="#0E0E12" data-ink="#F4F1EA" data-dim="#8B8B98" data-accent="#C9A227" data-accent2="#5FD0E6" data-fdisp="Fraunces" data-fbody="Inter" data-fmono="&#x27;Space Mono&#x27;" data-tex="dots" data-shape="soft"><div class="wrap">
     <h2>Where to find it</h2>
     <p>Everything I have made, and where it actually lives. Some is online, some you download, some is still being built — said honestly.</p>
-    <div class="ocols"><div class="ogroup"><h4>Live on the web</h4><div class="orow"><span class="oname">peterstam.eu</span><span class="onote">The books</span><span class="odots"></span><a class="olink" href="https://peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">raiseabuilder.com</span><span class="onote">With my dad</span><span class="odots"></span><a class="olink" href="https://raiseabuilder.com" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">castlefood.eu</span><span class="onote">Fry City OS</span><span class="odots"></span><a class="olink" href="https://castlefood.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">github.com/PstamBerlin</span><span class="onote">My code</span><span class="odots"></span><a class="olink" href="https://github.com/PstamBerlin" target="_blank" rel="noopener">Visit &#8599;</a></div></div><div class="ogroup"><h4>Download &amp; run</h4><div class="orow"><span class="oname">Chalkboard</span><span class="onote">The browser · empty by default</span><span class="odots"></span><a class="olink" href="https://chalkboard.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">Picture Machines</span><span class="onote">Use it in the browser</span><span class="odots"></span><a class="olink" href="picture-machine.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Picture Machines (Python)</span><span class="onote">The source tools + guides</span><span class="odots"></span><a class="olink" href="picture-machines.zip" target="_blank" rel="noopener">Download &#8599;</a></div><div class="orow"><span class="oname">CUBO</span><span class="onote">Rubik&#x27;s cube solver</span><span class="odots"></span><a class="olink" href="cubo.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Kyber</span><span class="onote">Lightsaber configurator</span><span class="odots"></span><a class="olink" href="kyber.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Clover</span><span class="onote">Coupon extension · tries &amp; stacks codes</span><span class="odots"></span><a class="olink" href="https://clover.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">Broom</span><span class="onote">Menu-bar sweeper · Mac &amp; Linux</span><span class="odots"></span><a class="olink" href="https://broom.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">The Operation Series</span><span class="onote">46 characters · free</span><span class="odots"></span><a class="olink" href="operation-series.zip" target="_blank" rel="noopener">Download &#8599;</a></div><div class="orow"><span class="oname">The books</span><span class="onote">Pay what you want, from €1</span><span class="odots"></span><a class="olink" href="https://peterstam.eu" target="_blank" rel="noopener">Buy &#8599;</a></div></div><div class="ogroup"><h4>Being built</h4><div class="orow"><span class="oname">Little One</span><span class="onote">Two games now · episode 3 building</span><span class="odots"></span><a class="olink" href="https://littleone.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">worlds.peterstam.eu</span><span class="onote">This page</span><span class="odots"></span><span class="ostat">You are here</span></div></div></div>
+    <div class="ocols"><div class="ogroup"><h4>Live on the web</h4><div class="orow"><span class="oname">peterstam.eu</span><span class="onote">The books</span><span class="odots"></span><a class="olink" href="https://peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">raiseabuilder.com</span><span class="onote">With my dad</span><span class="odots"></span><a class="olink" href="https://raiseabuilder.com" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">castlefood.eu</span><span class="onote">Fry City OS</span><span class="odots"></span><a class="olink" href="https://castlefood.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">screen.peterstam.eu</span><span class="onote">Screen protectors · prices &amp; dates</span><span class="odots"></span><a class="olink" href="https://screen.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">github.com/PstamBerlin</span><span class="onote">My code</span><span class="odots"></span><a class="olink" href="https://github.com/PstamBerlin" target="_blank" rel="noopener">Visit &#8599;</a></div></div><div class="ogroup"><h4>Download &amp; run</h4><div class="orow"><span class="oname">Chalkboard</span><span class="onote">The browser · empty by default</span><span class="odots"></span><a class="olink" href="https://chalkboard.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">Picture Machines</span><span class="onote">Use it in the browser</span><span class="odots"></span><a class="olink" href="picture-machine.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Picture Machines (Python)</span><span class="onote">The source tools + guides</span><span class="odots"></span><a class="olink" href="picture-machines.zip" target="_blank" rel="noopener">Download &#8599;</a></div><div class="orow"><span class="oname">CUBO</span><span class="onote">Rubik&#x27;s cube solver</span><span class="odots"></span><a class="olink" href="cubo.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Toys</span><span class="onote">Four browser toys · Goo Lab &amp; co.</span><span class="odots"></span><a class="olink" href="toys/" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Kyber</span><span class="onote">Lightsaber configurator</span><span class="odots"></span><a class="olink" href="kyber.html" target="_blank" rel="noopener">Open &#8599;</a></div><div class="orow"><span class="oname">Clover</span><span class="onote">Coupon extension · tries &amp; stacks codes</span><span class="odots"></span><a class="olink" href="https://clover.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">Broom</span><span class="onote">Menu-bar sweeper · Mac &amp; Linux</span><span class="odots"></span><a class="olink" href="https://broom.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">The Operation Series</span><span class="onote">46 characters · free</span><span class="odots"></span><a class="olink" href="operation-series.zip" target="_blank" rel="noopener">Download &#8599;</a></div><div class="orow"><span class="oname">The books</span><span class="onote">Pay what you want, from €1</span><span class="odots"></span><a class="olink" href="https://peterstam.eu" target="_blank" rel="noopener">Buy &#8599;</a></div></div><div class="ogroup"><h4>Being built</h4><div class="orow"><span class="oname">Little One</span><span class="onote">Two games now · episode 3 building</span><span class="odots"></span><a class="olink" href="https://littleone.peterstam.eu" target="_blank" rel="noopener">Visit &#8599;</a></div><div class="orow"><span class="oname">worlds.peterstam.eu</span><span class="onote">This page</span><span class="odots"></span><span class="ostat">You are here</span></div></div></div>
     <div class="contact">
       <span class="big">Say hello</span>
       <a href="mailto:stam.peter2015@gmail.com">stam.peter2015@gmail.com</a>
@@ -335,8 +362,9 @@ body[data-shape="sharp"] .sig .lbar,body[data-shape="sharp"] .sig .line{border-r
       else rootStyle.setProperty('--'+(k==='fdisp'?'fdisp':k==='fbody'?'fbody':k==='fmono'?'fmono':k), el.dataset[k]); });
     rootStyle.setProperty('--rad', el.dataset.shape==='sharp'?'0px':el.dataset.shape==='round'?'22px':'12px');
     const h=el.querySelector('h1,h2'); now.textContent = el.dataset.hero ? 'Everything I have made' : ('NOW — '+(h?h.textContent:''));
-    const idx=worlds.indexOf(el);
-    dots.forEach((d,i)=>d.classList.toggle('on', i===idx));
+    // dots start at the first world (the hero has none); the last dot is the outro
+    const idx=el===outro ? dots.length : worlds.indexOf(el);
+    dots.forEach((d,i)=>d.classList.toggle('on', i===idx-1));
   }
   // which section owns the middle of the screen
   const io=new IntersectionObserver((es)=>{

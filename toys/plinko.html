@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Plinko - soft / lab</title>
+<style>:root{--ink:#111;--mute:#8b8b86;--paper:#f5f4f0;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:"Helvetica Neue",Arial,sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.mono{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+canvas{touch-action:none}
+#title{position:fixed;left:16px;top:12px;pointer-events:none;z-index:3}
+#title h1{margin:2px 0 0;font:900 30px/0.9 "Arial Black","Helvetica Neue",Arial,sans-serif;letter-spacing:-.02em}
+#title .mono{color:var(--mute)}
+a.back{position:fixed;left:16px;bottom:18px;z-index:5;font:600 12px/1 "Helvetica Neue",Arial,sans-serif;color:#111;text-decoration:none;background:rgba(255,255,255,.88);padding:9px 12px;border-radius:999px;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+#bar,#chips{position:fixed;left:0;right:0;margin:0 auto;width:fit-content;display:flex;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.9);box-shadow:0 2px 16px rgba(0,0,0,.12);backdrop-filter:blur(8px);max-width:calc(100vw - 16px);flex-wrap:wrap;justify-content:center;z-index:4}
+#bar{bottom:14px} #chips{top:14px}
+.btn{font:600 12px/1 "Helvetica Neue",Arial,sans-serif;border:0;border-radius:999px;background:transparent;color:#222;cursor:pointer;padding:9px 13px;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation;white-space:nowrap}
+.btn::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--dot,#999)}
+.btn.on{background:#111;color:#fff}
+.btn:active{transform:scale(.96)}
+#stats{position:fixed;top:16px;right:16px;color:var(--mute);text-align:right;pointer-events:none;line-height:1.6;z-index:3}
+#stats b{color:#222;font-weight:600}
+#hint{position:fixed;left:16px;top:62px;max-width:min(280px,46vw);color:#555;font-size:12px;line-height:1.4;pointer-events:none;z-index:3}
+@media (max-width:640px){#title h1{font-size:22px}.btn{padding:8px 9px;font-size:11px}#chips{top:auto;bottom:100px}#hint{display:none}a.back{bottom:auto;top:12px;left:auto;right:12px}#stats{top:48px}}
+
+canvas{position:fixed;inset:0;width:100vw;height:100vh;cursor:crosshair}
+#hint{top:98px}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="title"><div class="mono">soft / lab - toy no. 03</div><h1>PLINKO</h1></div>
+<div id="hint" class="mono" style="text-transform:none;letter-spacing:0;font-family:inherit">Tap the top to drop a ball. Drop lots (try Rain) and watch the heap in the bins turn into a bell curve. Every ball bounces left or right at random on each peg.</div>
+<div id="stats" class="mono"><b id="sD">0</b> dropped &middot; <b id="sL">0</b> landed &middot; best bin <b id="sB">-</b></div>
+<div id="bar"><button class="btn" id="bDrop" style="--dot:#3fb34a">Drop</button><button class="btn" id="bRain" style="--dot:#4fb3ff">Rain</button><button class="btn" id="bFast" style="--dot:#ffd23c">Fast</button><button class="btn" id="bBounce" style="--dot:#ff6a2f">Bouncy</button><button class="btn" id="bPegs" style="--dot:#8f7bff">Move pegs</button><button class="btn" id="bBell" style="--dot:#111">Bell curve</button><button class="btn on" id="bSound" style="--dot:#ff5fa2">Sound</button><button class="btn" id="bClear" style="--dot:#e8554a">Clear</button></div>
+<a class="back" href="index.html">&larr; toys</a>
+<script>
+(() => {
+'use strict';
+const errors = []; window.__errors = errors; window.addEventListener('error', e => errors.push(String(e.message)));
+const $ = id => document.getElementById(id), canvas = $('c'), ctx = canvas.getContext('2d');
+const LW = 900, LH = 900; const COLS = 15, ROWS = 11, SX = 54, SY = 46, PR = 5.5, BR = 9, X0 = LW / 2 - 7 * SX, Y0 = 190;
+const BIN_TOP = Y0 + ROWS * SY + 16, BIN_BOT = LH - 20, NB = 15, BIN_L = X0 - SX / 2, BIN_W = SX; const WALL_L = BIN_L, WALL_R = BIN_L + NB * BIN_W;
+const pegs = []; for (let r = 0; r < ROWS; r++) { const n = r % 2 ? COLS - 1 : COLS; for (let c = 0; c < n; c++) pegs.push({ x: X0 + c * SX + (r % 2 ? SX / 2 : 0), y: Y0 + r * SY, r: PR, row: r, col: c, hit: 0 }); }
+const balls = []; const counts = new Array(NB).fill(0); let dropped = 0, landed = 0;
+const st = { rain: false, fast: false, bouncy: false, movePegs: false, bell: false, sound: true, e: 0.3, drag: 0.98 };
+let scale = 1, ox = 0, oy = 0;
+function resize() { const dpr = Math.min(devicePixelRatio || 1, 2); canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr; const small = innerWidth < 640; scale = Math.min(innerWidth / LW, (innerHeight - (small ? 170 : 92)) / LH); ox = (innerWidth - LW * scale) / 2; oy = small ? 74 : 6; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+addEventListener('resize', resize); resize();
+// ----------------------------------------------------------------------------------------------- sound
+let ac = null, plinks = 0, plT = 0; const PENT = [0, 2, 4, 7, 9];
+function audio() { if (ac) { if (ac.state === 'suspended') ac.resume(); return; } const C = window.AudioContext || window.webkitAudioContext; if (C) ac = new C(); }
+function plink(peg, v) { if (!st.sound || !ac) return; const now = ac.currentTime; if (now - plT > 0.1) { plT = now; plinks = 0; } if (++plinks > 7) return;
+  const f = 330 * Math.pow(2, (PENT[(peg.col + peg.row) % 5] + 12 * Math.floor((ROWS - peg.row) / 6)) / 12); const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = f;
+  g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(Math.min(0.18, v / 4500), now + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.28); o.connect(g); g.connect(ac.destination); o.start(now); o.stop(now + 0.3); }
+function thunk(i) { if (!st.sound || !ac) return; const now = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(180 + i * 12, now); o.frequency.exponentialRampToValueAtTime(70, now + 0.15); g.gain.setValueAtTime(0.14, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18); o.connect(g); g.connect(ac.destination); o.start(now); o.stop(now + 0.2); }
+// ----------------------------------------------------------------------------------------------- physics (balls, pegs, bin walls)
+function drop(x) { if (balls.length > 400) return; audio(); const hue = (dropped * 37) % 360; balls.push({ x: clamp(x, WALL_L + 20, WALL_R - 20) + (Math.random() - 0.5) * 3, y: 70 + Math.random() * 10, vx: (Math.random() - .5) * 20, vy: 0, r: BR, hue, still: 0 }); dropped++; }
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+function segHit(b, x1, y1, x2, y2, rad) { const dx = x2 - x1, dy = y2 - y1; const t = clamp(((b.x - x1) * dx + (b.y - y1) * dy) / (dx * dx + dy * dy), 0, 1); const cx = x1 + dx * t, cy = y1 + dy * t; const ddx = b.x - cx, ddy = b.y - cy, d = Math.hypot(ddx, ddy) || 0.001;
+  if (d < b.r + rad) { const nx = ddx / d, ny = ddy / d; b.x = cx + nx * (b.r + rad); b.y = cy + ny * (b.r + rad); const vn = b.vx * nx + b.vy * ny; if (vn < 0) { b.vx -= (1 + 0.3) * vn * nx; b.vy -= (1 + 0.3) * vn * ny; b.vx *= 0.97; } } }
+function step(dt) {
+  for (const b of balls) { b.vy += 1500 * dt; b.vx *= st.drag; b.x += b.vx * dt; b.y += b.vy * dt;
+    if (b.y < BIN_TOP + 10) for (const p of pegs) { const dx = b.x - p.x, dy = b.y - p.y; if (Math.abs(dx) > 30 || Math.abs(dy) > 30) continue; const d = Math.hypot(dx, dy), m = b.r + p.r;
+      if (d < m) { const nx = dx / (d || 0.001), ny = dy / (d || 0.001); b.x = p.x + nx * m; b.y = p.y + ny * m; const vn = b.vx * nx + b.vy * ny; if (vn < 0) { const e = st.e; b.vx -= (1 + e) * vn * nx; b.vy -= (1 + e) * vn * ny; b.vx += (Math.random() - 0.5) * 5; if (-vn > 90) { plink(p, -vn); p.hit = 1; } } } }
+    segHit(b, WALL_L, 0, WALL_L, BIN_BOT, 2); segHit(b, WALL_R, 0, WALL_R, BIN_BOT, 2);
+    if (b.y > BIN_TOP - 8) for (let k = 1; k < NB; k++) { const x = BIN_L + k * BIN_W; segHit(b, x, BIN_TOP, x, BIN_BOT, 2.2); }
+    if (b.y < BIN_TOP - 30 && Math.hypot(b.vx, b.vy) < 6) { b.still += dt; if (b.still > 0.7) { b.vx += (Math.random() < .5 ? -1 : 1) * 160; b.vy -= 120; b.still = 0; } } else b.still = 0; }
+  for (let i = 0; i < balls.length; i++) for (let j = i + 1; j < balls.length; j++) { const a = balls[i], b = balls[j]; const dx = b.x - a.x, dy = b.y - a.y; if (Math.abs(dx) > 2 * BR || Math.abs(dy) > 2 * BR) continue; const d = Math.hypot(dx, dy), m = a.r + b.r; if (d < m && d > 0.001) { const nx = dx / d, ny = dy / d, o = (m - d) / 2; a.x -= nx * o; a.y -= ny * o; b.x += nx * o; b.y += ny * o; const vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny; if (vn < 0) { const j2 = -(1 + 0.45) * vn / 2; a.vx -= j2 * nx; a.vy -= j2 * ny; b.vx += j2 * nx; b.vy += j2 * ny; } } }
+  for (let i = balls.length - 1; i >= 0; i--) { const b = balls[i]; if (b.y > BIN_BOT - 14 - counts[clamp(Math.floor((b.x - BIN_L) / BIN_W), 0, NB - 1)] * 0) { const k = clamp(Math.floor((b.x - BIN_L) / BIN_W), 0, NB - 1); counts[k]++; landed++; thunk(k); balls.splice(i, 1); } }
+  for (const p of pegs) p.hit = Math.max(0, p.hit - dt * 4);
+}
+// ----------------------------------------------------------------------------------------------- drawing
+function draw() {
+  ctx.clearRect(0, 0, innerWidth, innerHeight); ctx.save(); ctx.translate(ox, oy); ctx.scale(scale, scale);
+  ctx.strokeStyle = 'rgba(0,0,0,.05)'; ctx.lineWidth = 1; for (let x = 0; x <= LW; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, LH); ctx.stroke(); } for (let y = 0; y <= LH; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(LW, y); ctx.stroke(); }
+  ctx.strokeStyle = '#d6d3cb'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(WALL_L, 40); ctx.lineTo(WALL_L, BIN_BOT); ctx.lineTo(WALL_R, BIN_BOT); ctx.lineTo(WALL_R, 40); ctx.stroke();
+  ctx.lineWidth = 3; for (let k = 1; k < NB; k++) { const x = BIN_L + k * BIN_W; ctx.beginPath(); ctx.moveTo(x, BIN_TOP); ctx.lineTo(x, BIN_BOT); ctx.stroke(); }
+  const maxC = Math.max(8, ...counts), unit = Math.min(8, (BIN_BOT - BIN_TOP - 20) / maxC);
+  for (let k = 0; k < NB; k++) { const h = counts[k] * unit; const x = BIN_L + k * BIN_W + 5, w = BIN_W - 10; const hue = 190 + (k / NB) * 150; ctx.fillStyle = `hsl(${hue} 85% 58%)`; roundRect(x, BIN_BOT - 4 - h, w, h, 8); ctx.fill();
+    if (counts[k]) { ctx.fillStyle = '#111'; ctx.font = '600 12px ui-monospace,Menlo,monospace'; ctx.textAlign = 'center'; ctx.fillText(counts[k], x + w / 2, BIN_BOT - 10 - h); } }
+  if (st.bell && landed > 4) { ctx.strokeStyle = '#111'; ctx.setLineDash([6, 6]); ctx.lineWidth = 2; ctx.beginPath(); const mean = counts.reduce((a, c, i) => a + c * (i + .5), 0) / landed; const sd = Math.sqrt(counts.reduce((a, c, i) => a + c * Math.pow(i + .5 - mean, 2), 0) / landed) || 1;
+    for (let i = 0; i <= 60; i++) { const kx = i / 60 * NB; const y = landed * Math.exp(-Math.pow(kx - mean, 2) / (2 * sd * sd)) / (sd * 2.5066); const px = BIN_L + kx * BIN_W, py = BIN_BOT - 4 - y * unit; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke(); ctx.setLineDash([]); }
+  for (const p of pegs) { ctx.fillStyle = p.hit > 0 ? '#ff5fa2' : '#2a2a2a'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + p.hit * 3, 0, 7); ctx.fill(); }
+  for (const b of balls) { const g = ctx.createRadialGradient(b.x - 3, b.y - 3, 1, b.x, b.y, b.r); g.addColorStop(0, `hsl(${b.hue} 90% 80%)`); g.addColorStop(1, `hsl(${b.hue} 80% 50%)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#9a9a94'; ctx.font = '500 11px ui-monospace,Menlo,monospace'; ctx.textAlign = 'center'; ctx.fillText('TAP HERE TO DROP', LW / 2, 36); ctx.restore();
+}
+function roundRect(x, y, w, h, r) { if (h < 1) { h = 0; } ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, Math.min(r, h)); ctx.arcTo(x + w, y + h, x, y + h, 0); ctx.arcTo(x, y + h, x, y, 0); ctx.arcTo(x, y, x + w, y, Math.min(r, h)); ctx.closePath(); }
+// ----------------------------------------------------------------------------------------------- input + buttons
+const toLogic = e => [(e.clientX - ox) / scale, (e.clientY - oy) / scale]; let dragPeg = null;
+canvas.addEventListener('pointerdown', e => { audio(); const [x, y] = toLogic(e); if (st.movePegs) { let best = null, bd = 26; for (const p of pegs) { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p; } } if (best) { dragPeg = best; canvas.setPointerCapture(e.pointerId); return; } }
+  if (y < Y0 - 30) drop(x); });
+canvas.addEventListener('pointermove', e => { if (dragPeg) { const [x, y] = toLogic(e); dragPeg.x = clamp(x, WALL_L + 10, WALL_R - 10); dragPeg.y = clamp(y, 100, BIN_TOP - 20); } });
+const endDrag = () => { dragPeg = null; }; canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+const tog = (id, key, extra) => $(id).addEventListener('click', e => { audio(); st[key] = !st[key]; e.currentTarget.classList.toggle('on', st[key]); if (extra) extra(); });
+$('bDrop').onclick = () => { audio(); drop(LW / 2 + (Math.random() - .5) * 20); };
+tog('bRain', 'rain'); tog('bFast', 'fast'); tog('bBounce', 'bouncy', () => { st.e = st.bouncy ? 0.6 : 0.3; st.drag = st.bouncy ? 0.992 : 0.98; $('bBounce').textContent = st.bouncy ? 'Heavy' : 'Bouncy'; }); tog('bPegs', 'movePegs'); tog('bBell', 'bell'); tog('bSound', 'sound');
+$('bClear').onclick = () => { balls.length = 0; counts.fill(0); dropped = 0; landed = 0; };
+let last = performance.now(), acc = 0, rainT = 0;
+function frame(now) { requestAnimationFrame(frame); const dt = Math.min((now - last) / 1000, 0.05); last = now; if (st.rain) { rainT += dt; while (rainT > 0.13) { rainT -= 0.13; drop(LW / 2 + (Math.random() - .5) * 40); } }
+  const n = (st.fast ? 3 : 1) * 4; for (let i = 0; i < n; i++) step(dt / 4); draw();
+  $('sD').textContent = dropped; $('sL').textContent = landed; const m = Math.max(...counts); $('sB').textContent = m ? counts.indexOf(m) + 1 : '-'; }
+requestAnimationFrame(frame);
+window.__pl = { counts: () => counts.slice(), balls: () => balls.length, dropped: () => dropped, landed: () => landed, drop, step: n => { for (let i = 0; i < n; i++) step(1 / 240); }, st, pegs: () => pegs.length };
+})();
+</script></body></html>
